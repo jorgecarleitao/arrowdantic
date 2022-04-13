@@ -42,7 +42,7 @@ dependencies = [
 [[package]]
 name = "arrow2"
 version = "0.10.1"
-source = "git+https://github.com/jorgecarleitao/arrow2?branch=send_sync#fc8f5c31363aaf85dc2090557df5e29ba37da7cc"
+source = "git+https://github.com/jorgecarleitao/arrow2?branch=main#fafc70d29a103192bc39d5091207002ceecdef88"
 dependencies = [
  "arrow-format",
  "base64",

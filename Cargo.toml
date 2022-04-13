@@ -12,5 +12,5 @@ name = "arrowdantic_internal"
 crate-type = ["cdylib"]
 
 [dependencies]
-arrow2 = { git = "https://github.com/jorgecarleitao/arrow2", branch = "send_sync", features=["io_ipc", "io_parquet", "io_parquet_compression"] }
+arrow2 = { git = "https://github.com/jorgecarleitao/arrow2", branch = "main", features=["io_ipc", "io_parquet", "io_parquet_compression"] }
 pyo3 = { version = "0.16", features = ["extension-module"] }
