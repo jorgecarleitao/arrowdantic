@@ -1,0 +1,16 @@
+[package]
+name = "arrowdantic"
+version = "0.0.1"
+license = "Apache-2.0"
+description = "Arrow, pydantic style"
+authors = ["Jorge C. Leitao <jorgecarleitao@gmail.com>"]
+keywords = [ "arrow", "analytics" ]
+edition = "2021"
+
+[lib]
+name = "arrowdantic_internal"
+crate-type = ["cdylib"]
+
+[dependencies]
+arrow2 = { version = "0.10", features=["io_ipc"] }
+pyo3 = { version = "0.16", features = ["extension-module"] }
