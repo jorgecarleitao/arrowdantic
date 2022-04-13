@@ -30,17 +30,6 @@ def test_boolean():
     assert len(a) == 2
 
 
-def test_logical():
-    dt = arrowdantic.LogicalType(int)
-    assert str(dt) == "Int64"
-
-    dt = arrowdantic.LogicalType(bool)
-    assert str(dt) == "Boolean"
-
-    dt = arrowdantic.LogicalType("int32")
-    assert str(dt) == "Int32"
-
-
 def test_ipc_read():
     arrays = [
         pa.array([True, None, False], type=pa.bool_()),

@@ -10,41 +10,9 @@ use pyo3::prelude::*;
 
 use arrow2::array::Array as _Array;
 use arrow2::chunk::Chunk as _Chunk;
-use arrow2::datatypes::{DataType as _DataType, Field as _Field};
 
 use array::*;
 use error::Error;
-
-#[pyclass]
-struct DataType(_DataType);
-
-#[pymethods]
-impl DataType {
-    #[new]
-    fn new(type_: &PyAny) -> Self {
-        if let Ok(type_) = type_.extract::<String>() {
-            match type_.as_ref() {
-                "bool" => Self(_DataType::Boolean),
-                "int32" => Self(_DataType::Int32),
-                "int64" => Self(_DataType::Int64),
-                _ => todo!(),
-            }
-        } else {
-            todo!()
-        }
-    }
-
-    fn __repr__(&self) -> String {
-        format!("{:?}", self.0)
-    }
-
-    fn __str__(&self) -> String {
-        self.__repr__()
-    }
-}
-
-#[pyclass]
-struct Field(_Field);
 
 #[pyclass]
 struct Chunk(pub _Chunk<Arc<dyn _Array>>);
@@ -98,8 +66,5 @@ fn arrowdantic_internal(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<LargeStringArray>()?;
     m.add_class::<BinaryArray>()?;
     m.add_class::<LargeBinaryArray>()?;
-
-    m.add_class::<DataType>()?;
-    m.add_class::<Field>()?;
     Ok(())
 }

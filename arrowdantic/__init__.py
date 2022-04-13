@@ -1,54 +1,9 @@
-from typing import List, Optional, Union
-import enum
+from typing import List, Optional
 
 import arrowdantic_internal
 
 
-@enum.unique
-class PhysicalType(enum.Enum):
-    NULL = enum.auto()
-    BOOL = enum.auto()
-    UINT8 = enum.auto()
-    UINT16 = enum.auto()
-    UINT32 = enum.auto()
-    UINT64 = enum.auto()
-    INT8 = enum.auto()
-    INT16 = enum.auto()
-    INT32 = enum.auto()
-    INT64 = enum.auto()
-    FLOAT32 = enum.auto()
-    FLOAT64 = enum.auto()
-    STRING = enum.auto()
-    LARGESTRING = enum.auto()
-    BINARY = enum.auto()
-    LARGEBINARY = enum.auto()
-    FIXEDSIZEDBINARY = enum.auto()
-    LIST = enum.auto()
-    LARGELIST = enum.auto()
-    FIXEDSIZEDLIST = enum.auto()
-    STRUCT = enum.auto()
-
-
-class LogicalType:
-    def __init__(self, value: Union[type, str]):
-        if value is int:
-            dt = "int64"
-        elif value is bool:
-            dt = "bool"
-        elif isinstance(value, str):
-            dt = value
-        else:
-            dt = None
-        self._dt = arrowdantic_internal.DataType(dt)
-
-    def __repr__(self):
-        return self._dt.__repr__()
-
-
 class Array:
-    def __init__(self) -> None:
-        self._array = None
-
     @classmethod
     def _from_array(cls, array):
         a = cls()
