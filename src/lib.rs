@@ -1,16 +1,18 @@
+mod array;
 mod error;
 mod file_like;
 mod py_file;
 
 use std::sync::Arc;
 
+use arrow2::array::Array as _Array;
 use pyo3::prelude::*;
 
-use arrow2::array::{Array, BooleanArray as _BooleanArray, PrimitiveArray as _PrimitiveArray};
 use arrow2::chunk::Chunk as _Chunk;
 use arrow2::datatypes::{DataType as _DataType, Field as _Field};
 use arrow2::io::ipc::read;
 
+use array::*;
 use error::Error;
 
 #[pyclass]
@@ -44,74 +46,8 @@ impl DataType {
 #[pyclass]
 struct Field(_Field);
 
-macro_rules! native {
-    ($name:ident, $type:ty) => {
-        #[pyclass]
-        struct $name(_PrimitiveArray<$type>);
-
-        #[pymethods]
-        impl $name {
-            #[new]
-            fn new(values: &PyAny) -> PyResult<Self> {
-                if let Ok(values) = values.extract::<Vec<$type>>() {
-                    Ok(Self(_PrimitiveArray::<$type>::from_vec(values)))
-                } else if let Ok(values) = values.extract::<Vec<Option<$type>>>() {
-                    Ok(Self(_PrimitiveArray::<$type>::from(values)))
-                } else {
-                    todo!()
-                }
-            }
-
-            fn __repr__(&self) -> String {
-                format!("{:?}", &self.0 as &dyn Array)
-            }
-
-            fn __str__(&self) -> String {
-                self.__repr__()
-            }
-
-            fn __len__(&self) -> usize {
-                self.0.len()
-            }
-        }
-    };
-}
-
-native!(UInt32Array, u32);
-native!(Int32Array, i32);
-native!(Int64Array, i64);
-
 #[pyclass]
-struct BooleanArray(_BooleanArray);
-
-#[pymethods]
-impl BooleanArray {
-    #[new]
-    fn new(values: &PyAny) -> PyResult<Self> {
-        Ok(if let Ok(values) = values.extract::<Vec<bool>>() {
-            Self(_BooleanArray::from_slice(values))
-        } else if let Ok(values) = values.extract::<Vec<Option<bool>>>() {
-            Self(_BooleanArray::from(values))
-        } else {
-            todo!()
-        })
-    }
-
-    fn __repr__(&self) -> String {
-        format!("{:?}", &self.0 as &dyn Array)
-    }
-
-    fn __str__(&self) -> String {
-        self.__repr__()
-    }
-
-    fn __len__(&self) -> usize {
-        self.0.len()
-    }
-}
-
-#[pyclass]
-struct Chunk(pub _Chunk<Arc<dyn Array>>);
+struct Chunk(pub _Chunk<Arc<dyn _Array>>);
 
 #[pymethods]
 impl Chunk {
@@ -125,6 +61,14 @@ impl Chunk {
 
     fn __len__(&self) -> usize {
         self.0.len()
+    }
+
+    fn arrays(&self, py: Python) -> Vec<PyObject> {
+        self.0
+            .arrays()
+            .iter()
+            .map(|x| to_py_object(py, x.as_ref()))
+            .collect()
     }
 }
 
@@ -159,8 +103,17 @@ fn arrowdantic_internal(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Chunk>()?;
     m.add_class::<FileReader>()?;
     m.add_class::<Int32Array>()?;
+    m.add_class::<Int8Array>()?;
+    m.add_class::<Int16Array>()?;
+    m.add_class::<Int32Array>()?;
     m.add_class::<Int64Array>()?;
+    m.add_class::<Float32Array>()?;
+    m.add_class::<Float64Array>()?;
     m.add_class::<BooleanArray>()?;
+    m.add_class::<StringArray>()?;
+    m.add_class::<LargeStringArray>()?;
+    m.add_class::<BinaryArray>()?;
+    m.add_class::<LargeBinaryArray>()?;
     m.add_class::<DataType>()?;
     m.add_class::<Field>()?;
     Ok(())
