@@ -1,16 +1,16 @@
 mod array;
 mod error;
 mod file_like;
+mod io;
 mod py_file;
 
 use std::sync::Arc;
 
-use arrow2::array::Array as _Array;
 use pyo3::prelude::*;
 
+use arrow2::array::Array as _Array;
 use arrow2::chunk::Chunk as _Chunk;
 use arrow2::datatypes::{DataType as _DataType, Field as _Field};
-use arrow2::io::ipc::read;
 
 use array::*;
 use error::Error;
@@ -72,48 +72,33 @@ impl Chunk {
     }
 }
 
-#[pyclass]
-struct FileReader(read::FileReader<file_like::FileOrFileLike>);
-
-#[pymethods]
-impl FileReader {
-    #[new]
-    fn new(obj: PyObject) -> PyResult<Self> {
-        let mut reader = file_like::FileOrFileLike::from_pyobject(obj)?;
-
-        let metadata = read::read_file_metadata(&mut reader).map_err(Error)?;
-        let reader = read::FileReader::new(reader, metadata, None);
-
-        Ok(Self(reader))
-    }
-
-    fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
-        slf
-    }
-
-    fn __next__(mut slf: PyRefMut<Self>) -> PyResult<Option<Chunk>> {
-        let chunk = slf.0.next().transpose().map_err(Error)?;
-        Ok(chunk.map(Chunk))
-    }
-}
-
 #[pymodule]
 fn arrowdantic_internal(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<UInt32Array>()?;
     m.add_class::<Chunk>()?;
-    m.add_class::<FileReader>()?;
-    m.add_class::<Int32Array>()?;
+
+    m.add_class::<io::ArrowFileReader>()?;
+    m.add_class::<io::ParquetFileReader>()?;
+
     m.add_class::<Int8Array>()?;
     m.add_class::<Int16Array>()?;
     m.add_class::<Int32Array>()?;
     m.add_class::<Int64Array>()?;
+
+    m.add_class::<UInt8Array>()?;
+    m.add_class::<UInt16Array>()?;
+    m.add_class::<UInt32Array>()?;
+    m.add_class::<UInt64Array>()?;
+
     m.add_class::<Float32Array>()?;
     m.add_class::<Float64Array>()?;
+
     m.add_class::<BooleanArray>()?;
+
     m.add_class::<StringArray>()?;
     m.add_class::<LargeStringArray>()?;
     m.add_class::<BinaryArray>()?;
     m.add_class::<LargeBinaryArray>()?;
+
     m.add_class::<DataType>()?;
     m.add_class::<Field>()?;
     Ok(())

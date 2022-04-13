@@ -145,12 +145,26 @@ class Chunk:
         return self._chunk.__len__()
 
 
-class FileReader:
+class ArrowFileReader:
     """
-    An iterator of ``Chunk``, each corresponding to a group of arrays from the IPC file.
+    An iterator of ``Chunk``, each corresponding to a group of arrays from an Arrow IPC file.
     """
     def __init__(self, path_or_obj):
-        self._reader = arrowdantic_internal.FileReader(path_or_obj)
+        self._reader = arrowdantic_internal.ArrowFileReader(path_or_obj)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return Chunk._from_chunk(self._reader.__next__())
+
+
+class ParquetFileReader:
+    """
+    An iterator of ``Chunk``, each corresponding to a row group from a Parquet file.
+    """
+    def __init__(self, path_or_obj):
+        self._reader = arrowdantic_internal.ParquetFileReader(path_or_obj)
 
     def __iter__(self):
         return self
