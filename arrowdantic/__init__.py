@@ -1,10 +1,10 @@
 """
-A Python library written in Rust to read from and write to Apache Arrow IPC
+A Python library written in Rust to read from and write to Apache Arrow IPC (also known as feather)
 and Apache Parquet.
 """
 from typing import List, Optional
 
-import arrowdantic_internal
+import _arrowdantic_internal
 
 
 class DataType:
@@ -17,58 +17,58 @@ class DataType:
 
     @classmethod
     def bool(cls) -> "DataType":
-        return cls._from_type(arrowdantic_internal.DataType.bool())
+        return cls._from_type(_arrowdantic_internal.DataType.bool())
 
     @classmethod
     def int8(cls) -> "DataType":
         """Returns ``DataType`` representing a 8-bit signed integer"""
-        return cls._from_type(arrowdantic_internal.DataType.int8())
+        return cls._from_type(_arrowdantic_internal.DataType.int8())
 
     @classmethod
     def int16(cls) -> "DataType":
         """Returns ``DataType`` representing a 16-bit signed integer"""
-        return cls._from_type(arrowdantic_internal.DataType.int16())
+        return cls._from_type(_arrowdantic_internal.DataType.int16())
 
     @classmethod
     def int32(cls) -> "DataType":
         """Returns ``DataType`` representing a 32-bit signed integer"""
-        return cls._from_type(arrowdantic_internal.DataType.int32())
+        return cls._from_type(_arrowdantic_internal.DataType.int32())
 
     @classmethod
     def int64(cls) -> "DataType":
         """Returns ``DataType`` representing a 64-bit signed integer"""
-        return cls._from_type(arrowdantic_internal.DataType.int64())
+        return cls._from_type(_arrowdantic_internal.DataType.int64())
 
     @classmethod
     def uint8(cls) -> "DataType":
         """Returns ``DataType`` representing a 8-bit unsigned integer"""
-        return cls._from_type(arrowdantic_internal.DataType.uint8())
+        return cls._from_type(_arrowdantic_internal.DataType.uint8())
 
     @classmethod
     def uint16(cls) -> "DataType":
         """Returns ``DataType`` representing a 16-bit unsigned integer"""
-        return cls._from_type(arrowdantic_internal.DataType.uint16())
+        return cls._from_type(_arrowdantic_internal.DataType.uint16())
 
     @classmethod
     def uint32(cls) -> "DataType":
         """Returns ``DataType`` representing a 32-bit unsigned integer"""
-        return cls._from_type(arrowdantic_internal.DataType.uint32())
+        return cls._from_type(_arrowdantic_internal.DataType.uint32())
 
     @classmethod
     def uint64(cls) -> "DataType":
         """Returns ``DataType`` representing a 64-bit unsigned integer"""
-        return cls._from_type(arrowdantic_internal.DataType.uint64())
+        return cls._from_type(_arrowdantic_internal.DataType.uint64())
 
     @classmethod
     def string(cls) -> "DataType":
-        return cls._from_type(arrowdantic_internal.DataType.string())
+        return cls._from_type(_arrowdantic_internal.DataType.string())
 
     @classmethod
     def large_string(cls) -> "DataType":
-        return cls._from_type(arrowdantic_internal.DataType.large_string())
+        return cls._from_type(_arrowdantic_internal.DataType.large_string())
 
     @classmethod
-    def _from_type(cls, dt: arrowdantic_internal.DataType) -> "DataType":
+    def _from_type(cls, dt: _arrowdantic_internal.DataType) -> "DataType":
         a = DataType()
         a._dt = dt
         return a
@@ -90,10 +90,10 @@ class Field:
     __slots__ = ("_field",)
 
     def __init__(self, name: str, data_type: DataType, is_nullable: bool):
-        self._field = arrowdantic_internal.Field(name, data_type._dt, is_nullable)
+        self._field = _arrowdantic_internal.Field(name, data_type._dt, is_nullable)
 
     @classmethod
-    def _from_field(cls, f: arrowdantic_internal.Field) -> "Field":
+    def _from_field(cls, f: _arrowdantic_internal.Field) -> "Field":
         self = Field("", DataType.int32(), True)
         self._field = f
         return self
@@ -125,7 +125,7 @@ class Schema:
     __slots__ = ("_schema",)
 
     def __init__(self, fields: List[Field]):
-        self._schema = arrowdantic_internal.Schema([f._field for f in fields])
+        self._schema = _arrowdantic_internal.Schema([f._field for f in fields])
 
     @property     
     def fields(self):
@@ -165,103 +165,103 @@ class Array:
 class Int8Array(Array):
     """An array of 8-bit signed integers"""
     def __init__(self, values: List[Optional[int]]):
-        self._array = arrowdantic_internal.Int8Array(values)
+        self._array = _arrowdantic_internal.Int8Array(values)
 
 
 class Int16Array(Array):
     """An array of 16-bit signed integers"""
     def __init__(self, values: List[Optional[int]]):
-        self._array = arrowdantic_internal.Int16Array(values)
+        self._array = _arrowdantic_internal.Int16Array(values)
 
 
 
 class Int32Array(Array):
     """An array of 32-bit signed integers"""
     def __init__(self, values: List[Optional[int]]):
-        self._array = arrowdantic_internal.Int32Array(values)
+        self._array = _arrowdantic_internal.Int32Array(values)
 
 
 class Int64Array(Array):
     """An array of 64-bit signed integers"""
     def __init__(self, values: List[Optional[int]]):
-        self._array = arrowdantic_internal.Int64Array(values)
+        self._array = _arrowdantic_internal.Int64Array(values)
 
 
 class Float32Array(Array):
     """An array of 32-bit floating point"""
     def __init__(self, values: List[Optional[float]]):
-        self._array = arrowdantic_internal.Float32Array(values)
+        self._array = _arrowdantic_internal.Float32Array(values)
 
 
 class Float64Array(Array):
     """An array of 64-bit floating point"""
     def __init__(self, values: List[Optional[float]]):
-        self._array = arrowdantic_internal.Float64Array(values)
+        self._array = _arrowdantic_internal.Float64Array(values)
 
 
 class UInt8Array(Array):
     """An array of 8-bit unsigned integers (also known as bytes)"""
     def __init__(self, values: List[Optional[int]]):
-        self._array = arrowdantic_internal.UInt8Array(values)
+        self._array = _arrowdantic_internal.UInt8Array(values)
 
 
 class UInt16Array(Array):
     """An array of 16-bit unsigned integers"""
     def __init__(self, values: List[Optional[int]]):
-        self._array = arrowdantic_internal.UInt16Array(values)
+        self._array = _arrowdantic_internal.UInt16Array(values)
 
 
 class UInt32Array(Array):
     """An array of 32-bit unsigned integers"""
     def __init__(self, values: List[Optional[int]]):
-        self._array = arrowdantic_internal.UInt32Array(values)
+        self._array = _arrowdantic_internal.UInt32Array(values)
 
 
 class UInt64Array(Array):
     """An array of 64-bit unsigned integers"""
     def __init__(self, values: List[Optional[int]]):
-        self._array = arrowdantic_internal.UInt64Array(values)
+        self._array = _arrowdantic_internal.UInt64Array(values)
 
 
 class BooleanArray(Array):
     """An array of booleans"""
     def __init__(self, values: List[Optional[bool]]):
-        self._array = arrowdantic_internal.BooleanArray(values)
+        self._array = _arrowdantic_internal.BooleanArray(values)
 
 
 class StringArray(Array):
     """An array of strings"""
     def __init__(self, values: List[Optional[str]]):
-        self._array = arrowdantic_internal.StringArray(values)
+        self._array = _arrowdantic_internal.StringArray(values)
 
 
 class LargeStringArray(Array):
     """An array of strings. It differs from ``StringArray`` in that it can contain
     2x more items (and uses 2x more memory)"""
     def __init__(self, values: List[Optional[str]]):
-        self._array = arrowdantic_internal.LargeStringArray(values)
+        self._array = _arrowdantic_internal.LargeStringArray(values)
 
 
 class BinaryArray(Array):
     """An array of (multiple) bytes per element."""
     def __init__(self, values: List[Optional[bytes]]):
-        self._array = arrowdantic_internal.BinaryArray(values)
+        self._array = _arrowdantic_internal.BinaryArray(values)
 
 
 class LargeBinaryArray(Array):
     """An array of (multiple) bytes per element. It differs from ``BinaryArray`` in
     that it can contain 2x more items (and uses 2x more memory)"""
     def __init__(self, values: List[Optional[bytes]]):
-        self._array = arrowdantic_internal.LargeBinaryArray(values)
+        self._array = _arrowdantic_internal.LargeBinaryArray(values)
 
 
 class Chunk:
     """A list of ``Array``s all with the same length"""
     def __init__(self, arrays: List[Array]):
-        self._chunk = arrowdantic_internal.Chunk([x._array for x in arrays])
+        self._chunk = _arrowdantic_internal.Chunk([x._array for x in arrays])
 
     @staticmethod
-    def _from_chunk(chunk: arrowdantic_internal.Chunk) -> "Chunk":
+    def _from_chunk(chunk: _arrowdantic_internal.Chunk) -> "Chunk":
         a = Chunk([])
         a._chunk = chunk
         return a
@@ -283,7 +283,7 @@ class ArrowFileReader:
     Use this class to read Arrow IPC files.
     """
     def __init__(self, path_or_obj):
-        self._reader = arrowdantic_internal.ArrowFileReader(path_or_obj)
+        self._reader = _arrowdantic_internal.ArrowFileReader(path_or_obj)
 
     def __iter__(self):
         return self
@@ -311,7 +311,7 @@ class ArrowFileWriter:
         self._writer = None
 
     def __enter__(self) -> "ArrowFileWriter":
-        self._writer = arrowdantic_internal.ArrowFileWriter(self._path, self._schema._schema)
+        self._writer = _arrowdantic_internal.ArrowFileWriter(self._path, self._schema._schema)
         return self
 
     def write(self, chunk: Chunk):
@@ -329,7 +329,7 @@ class ParquetFileReader:
     An iterator of ``Chunk`` from row groups of a Parquet file.
     """
     def __init__(self, path_or_obj):
-        self._reader = arrowdantic_internal.ParquetFileReader(path_or_obj)
+        self._reader = _arrowdantic_internal.ParquetFileReader(path_or_obj)
 
     def __iter__(self):
         return self

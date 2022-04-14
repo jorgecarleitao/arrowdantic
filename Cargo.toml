@@ -8,7 +8,7 @@ keywords = [ "arrow", "analytics" ]
 edition = "2021"
 
 [lib]
-name = "arrowdantic_internal"
+name = "_arrowdantic_internal"
 crate-type = ["cdylib"]
 
 [dependencies]
