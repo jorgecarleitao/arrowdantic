@@ -52,10 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build wheels
-        run: docker run --rm -v $(pwd):/io \
-            --workdir /io \
-            konstin2/maturin:v0.12.10 \
-            build --release --manylinux 2010 --cargo-extra-args="--locked"
+        run: docker run --rm -v $(pwd):/io konstin2/maturin:v0.12.10 build --release --manylinux 2010
       - name: Archive wheels
         uses: actions/upload-artifact@v2
         with:
