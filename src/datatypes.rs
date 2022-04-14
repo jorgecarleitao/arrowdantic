@@ -77,14 +77,12 @@ pub struct Field(pub _Field);
 impl Field {
     #[new]
     fn new(name: String, data_type: DataType, is_nullable: bool) -> Self {
-        Self(
-            _Field {
-                name,
-                data_type: data_type.0,
-                is_nullable,
-                metadata: Default::default()
-            }
-        )
+        Self(_Field {
+            name,
+            data_type: data_type.0,
+            is_nullable,
+            metadata: Default::default(),
+        })
     }
 
     #[getter(name)]
@@ -127,18 +125,15 @@ impl Field {
 #[pyclass]
 pub struct Schema(pub _Schema);
 
-
 #[pymethods]
 impl Schema {
     #[new]
     fn new(fields: Vec<PyRef<Field>>) -> Self {
         let fields = fields.into_iter().map(|field| field.0.clone()).collect();
-        Self(
-            _Schema {
-                fields,
-                metadata: Default::default()
-            }
-        )
+        Self(_Schema {
+            fields,
+            metadata: Default::default(),
+        })
     }
 
     #[getter(fields)]

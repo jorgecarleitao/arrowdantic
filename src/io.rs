@@ -3,10 +3,10 @@ use pyo3::prelude::*;
 use arrow2::io::ipc;
 use arrow2::io::parquet;
 
+use super::datatypes::Schema;
 use super::file_like;
 use super::Chunk;
 use super::Error;
-use super::datatypes::Schema;
 
 #[pyclass]
 pub struct ArrowFileReader(ipc::read::FileReader<file_like::FileReader>);
@@ -57,7 +57,6 @@ impl ParquetFileReader {
         Ok(chunk.map(Chunk))
     }
 }
-
 
 #[pyclass]
 pub struct ArrowFileWriter(ipc::write::FileWriter<file_like::FileWriter>);

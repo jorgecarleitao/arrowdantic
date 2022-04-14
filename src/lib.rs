@@ -23,9 +23,10 @@ struct Chunk(pub _Chunk<Arc<dyn Array>>);
 impl Chunk {
     #[new]
     fn new(py: Python, arrays: Vec<PyObject>) -> PyResult<Self> {
-        let arrays = arrays.into_iter().map(|array| {
-            from_py_object(py, array)
-        }).collect();
+        let arrays = arrays
+            .into_iter()
+            .map(|array| from_py_object(py, array))
+            .collect();
         Ok(_Chunk::try_new(arrays).map_err(Error).map(Self)?)
     }
 

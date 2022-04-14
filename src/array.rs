@@ -299,14 +299,13 @@ pub fn to_py_object(py: Python, array: &dyn Array) -> PyObject {
     }
 }
 
-
 pub fn from_py_object(py: Python, array: PyObject) -> Arc<dyn Array> {
     if let Ok(array) = array.extract::<BooleanArray>(py) {
-        Arc::new(array.0.clone()) as Arc<dyn Array>
+        Arc::new(array.0) as Arc<dyn Array>
     } else if let Ok(array) = array.extract::<Int32Array>(py) {
-        Arc::new(array.0.clone()) as Arc<dyn Array>
+        Arc::new(array.0) as Arc<dyn Array>
     } else if let Ok(array) = array.extract::<UInt32Array>(py) {
-        Arc::new(array.0.clone()) as Arc<dyn Array>
+        Arc::new(array.0) as Arc<dyn Array>
     } else {
         todo!("{:?}", array)
     }
