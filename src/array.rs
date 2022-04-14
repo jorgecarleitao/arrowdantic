@@ -9,6 +9,7 @@ use arrow2::{
 use pyo3::class::basic::CompareOp;
 use pyo3::prelude::*;
 
+use super::datatypes;
 use super::iterator;
 
 macro_rules! primitive {
@@ -44,6 +45,11 @@ macro_rules! primitive {
 
             fn __iter__(slf: PyRef<Self>) -> iterator::$iterator {
                 iterator::$iterator::new(slf)
+            }
+
+            #[getter(type)]
+            fn dtype(&self) -> datatypes::DataType {
+                datatypes::DataType(self.0.data_type().clone())
             }
 
             fn __richcmp__(&self, py: Python, other: PyObject, op: CompareOp) -> PyResult<bool> {
@@ -99,6 +105,11 @@ impl BooleanArray {
 
     fn __len__(&self) -> usize {
         self.0.len()
+    }
+
+    #[getter(type)]
+    fn dtype(&self) -> datatypes::DataType {
+        datatypes::DataType(self.0.data_type().clone())
     }
 
     fn __iter__(slf: PyRef<Self>) -> iterator::BooleanIterator {
@@ -159,6 +170,11 @@ macro_rules! binary {
                 self.0.len()
             }
 
+            #[getter(type)]
+            fn dtype(&self) -> datatypes::DataType {
+                datatypes::DataType(self.0.data_type().clone())
+            }
+
             fn __iter__(slf: PyRef<Self>) -> iterator::$iterator {
                 iterator::$iterator::new(slf)
             }
@@ -214,6 +230,11 @@ macro_rules! string {
 
             fn __iter__(slf: PyRef<Self>) -> iterator::$iterator {
                 iterator::$iterator::new(slf)
+            }
+
+            #[getter(type)]
+            fn dtype(&self) -> datatypes::DataType {
+                datatypes::DataType(self.0.data_type().clone())
             }
 
             fn __richcmp__(&self, py: Python, other: PyObject, op: CompareOp) -> PyResult<bool> {

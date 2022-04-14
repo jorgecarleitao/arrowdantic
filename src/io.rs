@@ -8,13 +8,13 @@ use super::Chunk;
 use super::Error;
 
 #[pyclass]
-pub struct ArrowFileReader(ipc::read::FileReader<file_like::FileOrFileLike>);
+pub struct ArrowFileReader(ipc::read::FileReader<file_like::FileReader>);
 
 #[pymethods]
 impl ArrowFileReader {
     #[new]
     fn new(obj: PyObject) -> PyResult<Self> {
-        let mut reader = file_like::FileOrFileLike::from_pyobject(obj)?;
+        let mut reader = file_like::FileReader::from_pyobject(obj)?;
 
         let metadata = ipc::read::read_file_metadata(&mut reader).map_err(Error)?;
         let reader = ipc::read::FileReader::new(reader, metadata, None);
@@ -33,13 +33,13 @@ impl ArrowFileReader {
 }
 
 #[pyclass]
-pub struct ParquetFileReader(parquet::read::FileReader<file_like::FileOrFileLike>);
+pub struct ParquetFileReader(parquet::read::FileReader<file_like::FileReader>);
 
 #[pymethods]
 impl ParquetFileReader {
     #[new]
     fn new(obj: PyObject) -> PyResult<Self> {
-        let reader = file_like::FileOrFileLike::from_pyobject(obj)?;
+        let reader = file_like::FileReader::from_pyobject(obj)?;
 
         let reader =
             parquet::read::FileReader::try_new(reader, None, None, None, None).map_err(Error)?;
@@ -56,3 +56,28 @@ impl ParquetFileReader {
         Ok(chunk.map(Chunk))
     }
 }
+
+/*
+#[pyclass]
+pub struct ArrowFileWriter(ipc::write::FileWriter<file_like::FileWriter>);
+
+#[pymethods]
+impl ArrowFileWriter {
+    #[new]
+    fn new(obj: PyObject, schema: Schema) -> PyResult<Self> {
+        let mut writer = file_like::FileWriter::from_pyobject(obj)?;
+
+        let reader = ipc::write::FileWriter::try_new(
+            writer,
+            schema.0,
+            None,
+            ipc::write::WriteOptions { compression: None },
+        )
+        .map_err(Error)?;
+
+        Ok(Self(reader))
+    }
+
+    fn __enter__(slf: PyRef<Self>) {}
+}
+ */

@@ -3,12 +3,92 @@ from typing import List, Optional
 import arrowdantic_internal
 
 
+class DataType:
+    __slots__ = ("_dt",)
+
+    @classmethod
+    def int32(_) -> "DataType":
+        return DataType._from_type(arrowdantic_internal.DataType.int32())
+
+    @classmethod
+    def uint32(_) -> "DataType":
+        return DataType._from_type(arrowdantic_internal.DataType.uint32())
+
+    @classmethod
+    def bool(_) -> "DataType":
+        return DataType._from_type(arrowdantic_internal.DataType.bool())
+
+    @classmethod
+    def string(_) -> "DataType":
+        return DataType._from_type(arrowdantic_internal.DataType.string())
+
+    @classmethod
+    def _from_type(cls, dt: arrowdantic_internal.DataType) -> "DataType":
+        a = DataType()
+        a._dt = dt
+        return a
+
+    def __repr__(self):
+        return self._dt.__repr__()
+
+    def __eq__(self, o: "DataType") -> bool:
+        return o._dt == self._dt
+
+
+class Field:
+    __slots__ = ("_field",)
+
+    def __init__(self, name: str, data_type: DataType, is_nullable: bool):
+        self._field = arrowdantic_internal.Field(name, data_type._dt, is_nullable)
+
+    @classmethod
+    def _from_field(cls, f: arrowdantic_internal.Field) -> "Field":
+        self = Field("", DataType.int32(), True)
+        self._field = f
+        return self
+
+    @property
+    def name(self) -> str:
+        return self._field.name
+
+    @property
+    def data_type(self) -> DataType:
+        return DataType._from_type(self._field.data_type)
+
+    @property
+    def is_nullable(self) -> bool:
+        return self._field.is_nullable
+
+    def __repr__(self):
+        return self._field.__repr__()
+
+    def __eq__(self, o: "Field") -> bool:
+        return o._field == self._field
+
+
+class Schema:
+    __slots__ = ("_schema",)
+
+    def __init__(self, fields: List[Field]):
+        self._schema = arrowdantic_internal.Schema([f._field for f in fields])
+
+    @property     
+    def fields(self):
+        return [Field._from_field(f) for f in self._schema.fields]
+
+
 class Array:
+    __slots__ = ("_array",)
+
     @classmethod
     def _from_array(cls, array):
         a = cls()
         a._array = array
         return a
+
+    @property
+    def type(self):
+        return DataType._from_type(self._array.type)
 
     def __repr__(self):
         return self._array.__repr__()

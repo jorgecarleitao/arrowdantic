@@ -1,4 +1,5 @@
 mod array;
+mod datatypes;
 mod error;
 mod file_like;
 mod io;
@@ -67,5 +68,9 @@ fn arrowdantic_internal(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<LargeStringArray>()?;
     m.add_class::<BinaryArray>()?;
     m.add_class::<LargeBinaryArray>()?;
+
+    m.add_class::<datatypes::DataType>()?;
+    m.add_class::<datatypes::Field>()?;
+    m.add_class::<datatypes::Schema>()?;
     Ok(())
 }
