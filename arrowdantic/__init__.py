@@ -165,7 +165,7 @@ class LargeBinaryArray(Array):
 
 class Chunk:
     def __init__(self, arrays: List[Array]):
-        self._chunk = None
+        self._chunk = arrowdantic_internal.Chunk([x._array for x in arrays])
 
     @staticmethod
     def _from_chunk(chunk: arrowdantic_internal.Chunk) -> "Chunk":
@@ -195,6 +195,28 @@ class ArrowFileReader:
 
     def __next__(self):
         return Chunk._from_chunk(self._reader.__next__())
+
+
+class ArrowFileWriter:
+    """
+    Context manager to write ``Chunk``s to Arrow IPC file.
+    """
+    __slots__ = ("_writer", "_schema", "_path")
+
+    def __init__(self, path_or_obj, schema: Schema):
+        self._path = path_or_obj
+        self._schema = schema
+        self._writer = None
+
+    def __enter__(self) -> "ArrowFileWriter":
+        self._writer = arrowdantic_internal.ArrowFileWriter(self._path, self._schema._schema)
+        return self
+
+    def write(self, chunk: Chunk):
+        self._writer.write(chunk._chunk)
+
+    def __exit__(self, _, __, ___):
+        self._writer.__exit__()
 
 
 class ParquetFileReader:

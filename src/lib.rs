@@ -10,17 +10,25 @@ use std::sync::Arc;
 
 use pyo3::prelude::*;
 
-use arrow2::array::Array as _Array;
+use arrow2::array::Array;
 use arrow2::chunk::Chunk as _Chunk;
 
 use array::*;
 use error::Error;
 
 #[pyclass]
-struct Chunk(pub _Chunk<Arc<dyn _Array>>);
+struct Chunk(pub _Chunk<Arc<dyn Array>>);
 
 #[pymethods]
 impl Chunk {
+    #[new]
+    fn new(py: Python, arrays: Vec<PyObject>) -> PyResult<Self> {
+        let arrays = arrays.into_iter().map(|array| {
+            from_py_object(py, array)
+        }).collect();
+        Ok(_Chunk::try_new(arrays).map_err(Error).map(Self)?)
+    }
+
     fn __repr__(&self) -> String {
         format!("{:?}", self.0)
     }
@@ -47,6 +55,7 @@ fn arrowdantic_internal(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Chunk>()?;
 
     m.add_class::<io::ArrowFileReader>()?;
+    m.add_class::<io::ArrowFileWriter>()?;
     m.add_class::<io::ParquetFileReader>()?;
 
     m.add_class::<Int8Array>()?;

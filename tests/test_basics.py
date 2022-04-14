@@ -133,3 +133,24 @@ def test_parquet_read():
     assert arrays[7] == ad.LargeBinaryArray([b"a", None, b"c"])
     assert arrays[8] == ad.Float32Array([1.2, None, 3.4])
     assert arrays[9] == ad.Float64Array([1.2, None, 3.4])
+
+
+def test_ipc_round_trip():
+    original_arrays = [
+        ad.UInt32Array([1, None])
+    ]
+
+    schema = ad.Schema([
+        ad.Field(f'c{i}', array.type, True)
+        for i, array in enumerate(original_arrays)
+    ])
+
+    import io
+    data = io.BytesIO()
+    with ad.ArrowFileWriter(data, schema) as writer:
+        writer.write(ad.Chunk(original_arrays))
+    data.seek(0)
+
+    reader = ad.ArrowFileReader(data)
+    chunk = next(reader)
+    assert chunk.arrays() == original_arrays

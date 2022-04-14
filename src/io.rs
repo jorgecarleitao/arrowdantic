@@ -6,6 +6,7 @@ use arrow2::io::parquet;
 use super::file_like;
 use super::Chunk;
 use super::Error;
+use super::datatypes::Schema;
 
 #[pyclass]
 pub struct ArrowFileReader(ipc::read::FileReader<file_like::FileReader>);
@@ -57,7 +58,7 @@ impl ParquetFileReader {
     }
 }
 
-/*
+
 #[pyclass]
 pub struct ArrowFileWriter(ipc::write::FileWriter<file_like::FileWriter>);
 
@@ -65,11 +66,11 @@ pub struct ArrowFileWriter(ipc::write::FileWriter<file_like::FileWriter>);
 impl ArrowFileWriter {
     #[new]
     fn new(obj: PyObject, schema: Schema) -> PyResult<Self> {
-        let mut writer = file_like::FileWriter::from_pyobject(obj)?;
+        let writer = file_like::FileWriter::from_pyobject(obj)?;
 
         let reader = ipc::write::FileWriter::try_new(
             writer,
-            schema.0,
+            &schema.0,
             None,
             ipc::write::WriteOptions { compression: None },
         )
@@ -78,6 +79,16 @@ impl ArrowFileWriter {
         Ok(Self(reader))
     }
 
-    fn __enter__(slf: PyRef<Self>) {}
+    fn write(mut slf: PyRefMut<Self>, chunk: PyRef<Chunk>) -> PyResult<()> {
+        Ok(slf.0.write(&chunk.0, None).map_err(Error)?)
+    }
+
+    fn __enter__(slf: PyRefMut<Self>) -> PyRefMut<Self> {
+        slf
+    }
+
+    fn __exit__(mut slf: PyRefMut<Self>) -> PyResult<()> {
+        slf.0.finish().map_err(Error)?;
+        Ok(())
+    }
 }
- */
