@@ -19,6 +19,9 @@ class Array:
     def __eq__(self, o: "Array") -> bool:
         return o._array == self._array
 
+    def __iter__(self):
+        return self._array.__iter__()
+
 
 class Int8Array(Array):
     def __init__(self, values: List[Optional[int]]):

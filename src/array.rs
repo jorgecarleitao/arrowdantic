@@ -9,11 +9,13 @@ use arrow2::{
 use pyo3::class::basic::CompareOp;
 use pyo3::prelude::*;
 
-macro_rules! native {
-    ($name:ident, $type:ty) => {
+use super::iterator;
+
+macro_rules! primitive {
+    ($name:ident, $iterator:ident, $type:ty) => {
         #[derive(Clone, PartialEq, Debug)]
         #[pyclass]
-        pub struct $name(PrimitiveArray<$type>);
+        pub struct $name(pub PrimitiveArray<$type>);
 
         #[pymethods]
         impl $name {
@@ -40,6 +42,10 @@ macro_rules! native {
                 self.0.len()
             }
 
+            fn __iter__(slf: PyRef<Self>) -> iterator::$iterator {
+                iterator::$iterator::new(slf)
+            }
+
             fn __richcmp__(&self, py: Python, other: PyObject, op: CompareOp) -> PyResult<bool> {
                 Ok(if let Ok(other) = other.extract::<$name>(py) {
                     match op {
@@ -55,20 +61,20 @@ macro_rules! native {
     };
 }
 
-native!(UInt8Array, u8);
-native!(UInt16Array, u16);
-native!(UInt32Array, u32);
-native!(UInt64Array, u64);
-native!(Int8Array, i8);
-native!(Int16Array, i16);
-native!(Int32Array, i32);
-native!(Int64Array, i64);
-native!(Float32Array, f32);
-native!(Float64Array, f64);
+primitive!(UInt8Array, UInt8Iterator, u8);
+primitive!(UInt16Array, UInt16Iterator, u16);
+primitive!(UInt32Array, UInt32Iterator, u32);
+primitive!(UInt64Array, UInt64Iterator, u64);
+primitive!(Int8Array, Int8Iterator, i8);
+primitive!(Int16Array, Int16Iterator, i16);
+primitive!(Int32Array, Int32Iterator, i32);
+primitive!(Int64Array, Int64Iterator, i64);
+primitive!(Float32Array, Float32Iterator, f32);
+primitive!(Float64Array, Float64Iterator, f64);
 
 #[derive(Clone, PartialEq, Debug)]
 #[pyclass]
-pub struct BooleanArray(_BooleanArray);
+pub struct BooleanArray(pub _BooleanArray);
 
 #[pymethods]
 impl BooleanArray {
@@ -95,6 +101,10 @@ impl BooleanArray {
         self.0.len()
     }
 
+    fn __iter__(slf: PyRef<Self>) -> iterator::BooleanIterator {
+        iterator::BooleanIterator::new(slf)
+    }
+
     fn __richcmp__(&self, py: Python, other: PyObject, op: CompareOp) -> PyResult<bool> {
         Ok(if let Ok(other) = other.extract::<BooleanArray>(py) {
             match op {
@@ -119,10 +129,10 @@ macro_rules! primitive {
 }
 
 macro_rules! binary {
-    ($name:ident, $type:ty) => {
+    ($name:ident, $iterator:ident, $type:ty) => {
         #[derive(Clone, PartialEq, Debug)]
         #[pyclass]
-        pub struct $name(_BinaryArray<$type>);
+        pub struct $name(pub _BinaryArray<$type>);
 
         #[pymethods]
         impl $name {
@@ -149,6 +159,10 @@ macro_rules! binary {
                 self.0.len()
             }
 
+            fn __iter__(slf: PyRef<Self>) -> iterator::$iterator {
+                iterator::$iterator::new(slf)
+            }
+
             fn __richcmp__(&self, py: Python, other: PyObject, op: CompareOp) -> PyResult<bool> {
                 Ok(if let Ok(other) = other.extract::<$name>(py) {
                     match op {
@@ -164,14 +178,14 @@ macro_rules! binary {
     };
 }
 
-binary!(BinaryArray, i32);
-binary!(LargeBinaryArray, i64);
+binary!(BinaryArray, BinaryIterator, i32);
+binary!(LargeBinaryArray, LargeBinaryIterator, i64);
 
 macro_rules! string {
-    ($name:ident, $type:ty) => {
+    ($name:ident, $iterator:ident, $type:ty) => {
         #[derive(Clone, PartialEq, Debug)]
         #[pyclass]
-        pub struct $name(Utf8Array<$type>);
+        pub struct $name(pub Utf8Array<$type>);
 
         #[pymethods]
         impl $name {
@@ -198,6 +212,10 @@ macro_rules! string {
                 self.0.len()
             }
 
+            fn __iter__(slf: PyRef<Self>) -> iterator::$iterator {
+                iterator::$iterator::new(slf)
+            }
+
             fn __richcmp__(&self, py: Python, other: PyObject, op: CompareOp) -> PyResult<bool> {
                 Ok(if let Ok(other) = other.extract::<$name>(py) {
                     match op {
@@ -213,8 +231,8 @@ macro_rules! string {
     };
 }
 
-string!(StringArray, i32);
-string!(LargeStringArray, i64);
+string!(StringArray, StringIterator, i32);
+string!(LargeStringArray, LargeStringIterator, i64);
 
 pub fn to_py_object(py: Python, array: &dyn Array) -> PyObject {
     use arrow2::datatypes::PrimitiveType::*;

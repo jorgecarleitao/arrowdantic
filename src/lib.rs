@@ -2,6 +2,7 @@ mod array;
 mod error;
 mod file_like;
 mod io;
+mod iterator;
 mod py_file;
 
 use std::sync::Arc;

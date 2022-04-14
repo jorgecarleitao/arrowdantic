@@ -10,6 +10,7 @@ def test_int32():
     a = arrowdantic.Int32Array([1, None])
     assert str(a) == "Int32[1, None]"
     assert len(a) == 2
+    assert list(a) == [1, None]
 
 
 def test_uint32():
@@ -19,6 +20,7 @@ def test_uint32():
     a = arrowdantic.UInt32Array([1, None])
     assert str(a) == "UInt32[1, None]"
     assert len(a) == 2
+    assert list(a) == [1, None]
 
 
 def test_boolean():
@@ -28,6 +30,17 @@ def test_boolean():
     a = arrowdantic.BooleanArray([True, None])
     assert str(a) == "BooleanArray[true, None]"
     assert len(a) == 2
+    assert list(a) == [True, None]
+
+
+def test_string():
+    a = arrowdantic.StringArray(["a", "b"])
+    assert str(a) == "Utf8Array[a, b]"
+
+    a = arrowdantic.StringArray(["a", None])
+    assert str(a) == "Utf8Array[a, None]"
+    assert len(a) == 2
+    assert list(a) == ["a", None]
 
 
 def test_ipc_read():
