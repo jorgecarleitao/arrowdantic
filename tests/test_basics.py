@@ -67,12 +67,12 @@ def test_ipc_read():
         pa.array([1.2, None, 3.4], type=pa.float64()),
     ]
 
-    schema = pa.schema([
-        pa.field(f'c{i}', array.type)
-        for i, array in enumerate(arrays)
-    ])
+    schema = pa.schema(
+        [pa.field(f"c{i}", array.type) for i, array in enumerate(arrays)]
+    )
 
     import io
+
     data = io.BytesIO()
     with pa.ipc.new_file(data, schema) as writer:
         batch = pa.record_batch(arrays, schema)
@@ -109,12 +109,12 @@ def test_parquet_read():
         pa.array([1.2, None, 3.4], type=pa.float64()),
     ]
 
-    schema = pa.schema([
-        pa.field(f'c{i}', array.type)
-        for i, array in enumerate(arrays)
-    ])
+    schema = pa.schema(
+        [pa.field(f"c{i}", array.type) for i, array in enumerate(arrays)]
+    )
 
     import io
+
     data = io.BytesIO()
     pa.parquet.write_table(pa.table(arrays, schema), data)
     data.seek(0)
@@ -136,16 +136,14 @@ def test_parquet_read():
 
 
 def test_ipc_round_trip():
-    original_arrays = [
-        ad.UInt32Array([1, None])
-    ]
+    original_arrays = [ad.UInt32Array([1, None])]
 
-    schema = ad.Schema([
-        ad.Field(f'c{i}', array.type, True)
-        for i, array in enumerate(original_arrays)
-    ])
+    schema = ad.Schema(
+        [ad.Field(f"c{i}", array.type, True) for i, array in enumerate(original_arrays)]
+    )
 
     import io
+
     data = io.BytesIO()
     with ad.ArrowFileWriter(data, schema) as writer:
         writer.write(ad.Chunk(original_arrays))
@@ -157,10 +155,7 @@ def test_ipc_round_trip():
 
 
 def test_sql_write():
-    arrays = [
-        ad.Int32Array([1, None]),
-        ad.StringArray(["aa", None])
-    ]
+    arrays = [ad.Int32Array([1, None]), ad.StringArray(["aa", None])]
 
     with ad.ODBCWriter(r"Driver={SQLite3};Database=sqlite-test.db") as con:
         # create an empty table with a schema
@@ -169,3 +164,7 @@ def test_sql_write():
 
         # and insert the arrays
         con.write("INSERT INTO example (c1, c2) VALUES (?, ?)", ad.Chunk(arrays))
+
+        chunks = con.execute("SELECT c1 FROM example", 1024)
+        chunk = next(chunks)
+    assert chunk.arrays() == arrays

@@ -1,5 +1,6 @@
 use pyo3::prelude::*;
 
+use arrow2::chunk::Chunk as _Chunk;
 use arrow2::datatypes::Field;
 use arrow2::io::ipc;
 use arrow2::io::odbc;
@@ -131,12 +132,32 @@ impl ODBCWriter {
         Ok(())
     }
 
-    fn execute(slf: PyRefMut<Self>, query: &str) -> PyResult<()> {
-        // let's create an empty table with a schema
-        slf.0
-            .execute(query, ())
-            .map_err(arrow2::error::ArrowError::from_external_error)
-            .map_err(Error)?;
-        Ok(())
+    fn execute(slf: PyRef<Self>, query: &str, batch_size: usize) -> PyResult<Option<ODBCIterator>> {
+        let maybe_cursor = odbc::read::execute(&slf.0, query, (), batch_size).map_err(Error)?;
+
+        Ok(maybe_cursor.map(ODBCIterator))
+    }
+}
+
+#[pyclass(unsendable)]
+pub struct ODBCIterator(pub odbc::read::ChunkIterator<'static>);
+
+#[pymethods]
+impl ODBCIterator {
+    fn __next__(mut slf: PyRefMut<Self>) -> PyResult<Option<Chunk>> {
+        Ok(slf
+            .0
+            .next()
+            .transpose()
+            .map_err(Error)?
+            .map(|chunk| {
+                chunk
+                    .into_arrays()
+                    .into_iter()
+                    .map(|array| array.into())
+                    .collect()
+            })
+            .map(_Chunk::new)
+            .map(Chunk))
     }
 }

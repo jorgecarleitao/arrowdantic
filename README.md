@@ -5,7 +5,7 @@ to read Parquet and Arrow IPC files to Python.
 
 Its main differences vs pyarrow are:
 * it is quite small (3Mb vs 90Mb)
-* faster
+* equally fast
 * likely safer (no segfaults, core dumps, buffer overflows, etc.)
 * it is type-hinted
 * it has a much smaller subset of its functionality
@@ -15,7 +15,7 @@ Its main differences vs pyarrow are:
 * declare and access basic arrays (integers, floats, boolean, string, binary)
 * read from and write to Apache Arrow IPC file
 * read from Apache Parquet
-* write to databases (any installed ODBC driver)
+* read from and write to ODBC-compliant databases (e.g. postgres, mongoDB)
 
 ## Examples
 

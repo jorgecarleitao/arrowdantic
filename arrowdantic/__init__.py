@@ -362,37 +362,33 @@ class ParquetFileReader:
         return Chunk._from_chunk(self._reader.__next__())
 
 
-class ODBCWriter:
+class ODBCConnector:
     """
-    Context manager to write an Arrow IPC file. A file is composed by:
-    * a header
-    * multiple record batches
-    * a footer
-
-    the header is written when the context manager is entered,
-    each batch is written using ``write``, and the footer is written when the context
-    manager is exited.
+    Context manager to read and write an ODBC connection.
     """
 
-    __slots__ = ("_writer", "_schema", "_connection_string")
+    __slots__ = ("_writer", "_connection_string")
 
     def __init__(self, connection_string: str):
         self._connection_string = connection_string
         self._writer = None
 
-    def __enter__(self) -> "ODBCWriter":
+    def __enter__(self) -> "ODBCConnector":
         self._writer = _arrowdantic_internal.ODBCWriter(self._connection_string)
         return self
 
-    def execute(self, statement: str):
+    def execute(self, statement: str, batch_size: int):
         """
-        Executes an SQL statement (that does not return any result)
+        Executes an SQL statement
         """
-        self._writer.execute(statement)
+        self._writer.execute(statement, batch_size)
 
     def write(self, statement: str, chunk: Chunk):
         """
-        Writes a ``Chunk`` into the ODBC driver against the insert query.
+        Writes a ``Chunk`` into the ODBC driver. The statement must have the same number
+        of parameters as the number of arrays in `chunk`.
+
+        Example: ``INSERT INTO table (c1, c2) VALUES (?, ?)`` with a chunk of 2 arrays.
         """
         self._writer.write(statement, chunk._chunk)
 
