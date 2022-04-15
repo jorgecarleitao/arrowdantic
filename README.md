@@ -9,11 +9,17 @@ Its main differences vs pyarrow are:
 * likely safer (no segfaults, core dumps, buffer overflows, etc.)
 * it is type-hinted
 * it has a much smaller subset of its functionality
-  * basic arrays (integers, floats, boolean, string, binary)
-  * read Apache Arrow IPC file
-  * read Apache Parquet
 
-## Example 
+## Features
+
+* declare and access basic arrays (integers, floats, boolean, string, binary)
+* read from and write to Apache Arrow IPC file
+* read from Apache Parquet
+* write to databases (any installed ODBC driver)
+
+## Examples
+
+### Read from parquet
 
 ```python
 import io

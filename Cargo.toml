@@ -12,5 +12,7 @@ name = "_arrowdantic_internal"
 crate-type = ["cdylib"]
 
 [dependencies]
-arrow2 = { git = "https://github.com/jorgecarleitao/arrow2", branch = "main", features=["io_ipc", "io_parquet", "io_parquet_compression"] }
+arrow2 = { git = "https://github.com/jorgecarleitao/arrow2", branch = "main", features=["io_ipc", "io_parquet", "io_parquet_compression", "io_odbc"] }
 pyo3 = { version = "0.16", features = ["extension-module"] }
+# ODBC requires a global state
+once_cell = "1"

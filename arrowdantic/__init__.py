@@ -13,6 +13,7 @@ class DataType:
 
     This class contains multiple class methods to initialize valid logical types
     """
+
     __slots__ = ("_dt",)
 
     @classmethod
@@ -82,11 +83,12 @@ class DataType:
 
 class Field:
     """
-    Arrow's representation of a column. It is composed by 
+    Arrow's representation of a column. It is composed by
     * a name
     * a DataType
     * its nullability
     """
+
     __slots__ = ("_field",)
 
     def __init__(self, name: str, data_type: DataType, is_nullable: bool):
@@ -122,12 +124,13 @@ class Field:
 
 class Schema:
     """A collection of ``Field``s"""
+
     __slots__ = ("_schema",)
 
     def __init__(self, fields: List[Field]):
         self._schema = _arrowdantic_internal.Schema([f._field for f in fields])
 
-    @property     
+    @property
     def fields(self):
         """The fields"""
         return [Field._from_field(f) for f in self._schema.fields]
@@ -136,6 +139,7 @@ class Schema:
 class Array:
     """An ``Array`` is an immutable, fixed length, Arrow-aligned sequence of optional elements.
     Different implementations represent different logical types (e.g. integers, booleans, strings)"""
+
     __slots__ = ("_array",)
 
     @classmethod
@@ -164,73 +168,84 @@ class Array:
 
 class Int8Array(Array):
     """An array of 8-bit signed integers"""
+
     def __init__(self, values: List[Optional[int]]):
         self._array = _arrowdantic_internal.Int8Array(values)
 
 
 class Int16Array(Array):
     """An array of 16-bit signed integers"""
+
     def __init__(self, values: List[Optional[int]]):
         self._array = _arrowdantic_internal.Int16Array(values)
 
 
-
 class Int32Array(Array):
     """An array of 32-bit signed integers"""
+
     def __init__(self, values: List[Optional[int]]):
         self._array = _arrowdantic_internal.Int32Array(values)
 
 
 class Int64Array(Array):
     """An array of 64-bit signed integers"""
+
     def __init__(self, values: List[Optional[int]]):
         self._array = _arrowdantic_internal.Int64Array(values)
 
 
 class Float32Array(Array):
     """An array of 32-bit floating point"""
+
     def __init__(self, values: List[Optional[float]]):
         self._array = _arrowdantic_internal.Float32Array(values)
 
 
 class Float64Array(Array):
     """An array of 64-bit floating point"""
+
     def __init__(self, values: List[Optional[float]]):
         self._array = _arrowdantic_internal.Float64Array(values)
 
 
 class UInt8Array(Array):
     """An array of 8-bit unsigned integers (also known as bytes)"""
+
     def __init__(self, values: List[Optional[int]]):
         self._array = _arrowdantic_internal.UInt8Array(values)
 
 
 class UInt16Array(Array):
     """An array of 16-bit unsigned integers"""
+
     def __init__(self, values: List[Optional[int]]):
         self._array = _arrowdantic_internal.UInt16Array(values)
 
 
 class UInt32Array(Array):
     """An array of 32-bit unsigned integers"""
+
     def __init__(self, values: List[Optional[int]]):
         self._array = _arrowdantic_internal.UInt32Array(values)
 
 
 class UInt64Array(Array):
     """An array of 64-bit unsigned integers"""
+
     def __init__(self, values: List[Optional[int]]):
         self._array = _arrowdantic_internal.UInt64Array(values)
 
 
 class BooleanArray(Array):
     """An array of booleans"""
+
     def __init__(self, values: List[Optional[bool]]):
         self._array = _arrowdantic_internal.BooleanArray(values)
 
 
 class StringArray(Array):
     """An array of strings"""
+
     def __init__(self, values: List[Optional[str]]):
         self._array = _arrowdantic_internal.StringArray(values)
 
@@ -238,12 +253,14 @@ class StringArray(Array):
 class LargeStringArray(Array):
     """An array of strings. It differs from ``StringArray`` in that it can contain
     2x more items (and uses 2x more memory)"""
+
     def __init__(self, values: List[Optional[str]]):
         self._array = _arrowdantic_internal.LargeStringArray(values)
 
 
 class BinaryArray(Array):
     """An array of (multiple) bytes per element."""
+
     def __init__(self, values: List[Optional[bytes]]):
         self._array = _arrowdantic_internal.BinaryArray(values)
 
@@ -251,12 +268,14 @@ class BinaryArray(Array):
 class LargeBinaryArray(Array):
     """An array of (multiple) bytes per element. It differs from ``BinaryArray`` in
     that it can contain 2x more items (and uses 2x more memory)"""
+
     def __init__(self, values: List[Optional[bytes]]):
         self._array = _arrowdantic_internal.LargeBinaryArray(values)
 
 
 class Chunk:
     """A list of ``Array``s all with the same length"""
+
     def __init__(self, arrays: List[Array]):
         self._chunk = _arrowdantic_internal.Chunk([x._array for x in arrays])
 
@@ -282,6 +301,7 @@ class ArrowFileReader:
     An iterator of ``Chunk``, each corresponding to a record batch from an Arrow IPC file.
     Use this class to read Arrow IPC files.
     """
+
     def __init__(self, path_or_obj):
         self._reader = _arrowdantic_internal.ArrowFileReader(path_or_obj)
 
@@ -303,6 +323,7 @@ class ArrowFileWriter:
     each batch is written using ``write``, and the footer is written when the context
     manager is exited.
     """
+
     __slots__ = ("_writer", "_schema", "_path")
 
     def __init__(self, path_or_obj, schema: Schema):
@@ -311,7 +332,9 @@ class ArrowFileWriter:
         self._writer = None
 
     def __enter__(self) -> "ArrowFileWriter":
-        self._writer = _arrowdantic_internal.ArrowFileWriter(self._path, self._schema._schema)
+        self._writer = _arrowdantic_internal.ArrowFileWriter(
+            self._path, self._schema._schema
+        )
         return self
 
     def write(self, chunk: Chunk):
@@ -328,6 +351,7 @@ class ParquetFileReader:
     """
     An iterator of ``Chunk`` from row groups of a Parquet file.
     """
+
     def __init__(self, path_or_obj):
         self._reader = _arrowdantic_internal.ParquetFileReader(path_or_obj)
 
@@ -336,3 +360,41 @@ class ParquetFileReader:
 
     def __next__(self):
         return Chunk._from_chunk(self._reader.__next__())
+
+
+class ODBCWriter:
+    """
+    Context manager to write an Arrow IPC file. A file is composed by:
+    * a header
+    * multiple record batches
+    * a footer
+
+    the header is written when the context manager is entered,
+    each batch is written using ``write``, and the footer is written when the context
+    manager is exited.
+    """
+
+    __slots__ = ("_writer", "_schema", "_connection_string")
+
+    def __init__(self, connection_string: str):
+        self._connection_string = connection_string
+        self._writer = None
+
+    def __enter__(self) -> "ODBCWriter":
+        self._writer = _arrowdantic_internal.ODBCWriter(self._connection_string)
+        return self
+
+    def execute(self, statement: str):
+        """
+        Executes an SQL statement (that does not return any result)
+        """
+        self._writer.execute(statement)
+
+    def write(self, statement: str, chunk: Chunk):
+        """
+        Writes a ``Chunk`` into the ODBC driver against the insert query.
+        """
+        self._writer.write(statement, chunk._chunk)
+
+    def __exit__(self, _, __, ___):
+        self._writer = None

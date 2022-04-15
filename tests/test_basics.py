@@ -154,3 +154,18 @@ def test_ipc_round_trip():
     reader = ad.ArrowFileReader(data)
     chunk = next(reader)
     assert chunk.arrays() == original_arrays
+
+
+def test_sql_write():
+    arrays = [
+        ad.Int32Array([1, None]),
+        ad.StringArray(["aa", None])
+    ]
+
+    with ad.ODBCWriter(r"Driver={SQLite3};Database=sqlite-test.db") as con:
+        # create an empty table with a schema
+        con.execute("DROP TABLE IF EXISTS example;")
+        con.execute("CREATE TABLE example (c1 INT, c2 TEXT);")
+
+        # and insert the arrays
+        con.write("INSERT INTO example (c1, c2) VALUES (?, ?)", ad.Chunk(arrays))
