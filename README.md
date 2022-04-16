@@ -1,13 +1,21 @@
 # Welcome to arrowdantic
 
-Arrowdantic is a small Python library backed by a mature Rust implementation of Apache Arrow
-that can interoperate with Parquet, Arrow and ODBC.
+Arrowdantic is a small Python library backed by a
+[mature Rust implementation](https://github.com/jorgecarleitao/arrow2) of Apache Arrow
+that can interoperate with
+* [Parquet](https://parquet.apache.org/)
+* [Apache Arrow](https://arrow.apache.org/) and 
+* [ODBC](https://en.wikipedia.org/wiki/Open_Database_Connectivity) (databases).
 
-For simple (but data-heavy) data engineering tasks, this package can replace:
-* sqlalchemy: it supports read from and write to a DB
-* pandas
-* pyarrow: it supports reading from and writing to parquet and Arrow
-* psycopg2-binary/psycopg2: it uses ODBC to communicate with postgres (and many others)
+For simple (but data-heavy) data engineering tasks, this package essentially replaces
+`pyarrow`: it supports reading from and writing to Parquet, Arrow at the same or
+higher performance and higher safety (e.g. no segfaults).
+
+Furthermore, it supports reading from and writing to ODBC compliant databases at
+the same or higher performance than [`turbodbc`](https://turbodbc.readthedocs.io/en/latest/).
+
+This package is also suitable for environments such as AWS Lambda functions. It takes 13M of disk
+space, compared to 82M taken by pyarrow.
 
 ## Features
 

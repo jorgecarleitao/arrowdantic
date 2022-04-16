@@ -1,10 +1,12 @@
 [package]
 name = "arrowdantic"
-version = "0.0.2"
+version = "0.1.0"
 license = "Apache-2.0"
 description = "Arrow, pydantic style"
 authors = ["Jorge C. Leitao <jorgecarleitao@gmail.com>"]
-keywords = [ "arrow", "analytics" ]
+keywords = [ "analytics", "arrow", "ODBC", "parquet" ]
+homepage = "https://github.com/jorgecarleitao/arrowdantic"
+repository = "https://github.com/jorgecarleitao/arrowdantic"
 edition = "2021"
 
 [lib]
