@@ -22,6 +22,10 @@ impl ArrowFileReader {
         Ok(Self(reader))
     }
 
+    fn schema(slf: PyRef<Self>) -> Schema {
+        Schema(slf.0.schema().clone())
+    }
+
     fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
         slf
     }

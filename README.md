@@ -1,56 +1,90 @@
 # Welcome to arrowdantic
 
-Arrowdantic is a small Python library backed by a Rust implementation of Apache Arrow
-to read Parquet and Arrow IPC files to Python.
+Arrowdantic is a small Python library backed by a mature Rust implementation of Apache Arrow
+that can interoperate with Parquet, Arrow and ODBC.
 
-Its main differences vs pyarrow are:
-* it is quite small (3Mb vs 90Mb)
-* equally fast
-* likely safer (no segfaults, core dumps, buffer overflows, etc.)
-* it is type-hinted
-* it has a much smaller subset of its functionality
+For simple (but data-heavy) data engineering tasks, this package can replace:
+* sqlalchemy: it supports read from and write to a DB
+* pandas
+* pyarrow: it supports reading from and writing to parquet and Arrow
+* psycopg2-binary/psycopg2: it uses ODBC to communicate with postgres (and many others)
 
 ## Features
 
-* declare and access basic arrays (integers, floats, boolean, string, binary)
+* declare and access Arrow-backed arrays (integers, floats, boolean, string, binary)
 * read from and write to Apache Arrow IPC file
-* read from Apache Parquet
+* read from and write to Apache Parquet
 * read from and write to ODBC-compliant databases (e.g. postgres, mongoDB)
 
 ## Examples
 
-### Read from parquet
+### Use parquet
 
 ```python
 import io
-
 import arrowdantic as ad
-# pyarrow is not needed; we just use it here to write a parquet file for the example
-import pyarrow as pa
 
-def _write_a_parquet() -> io.BytesIO:
-    arrays = [
-        pa.array([True, None, False], type=pa.bool_()),
-    ]
+original_arrays = [ad.UInt32Array([1, None])]
 
-    schema = pa.schema([
-        pa.field(f'c{i}', array.type)
-        for i, array in enumerate(arrays)
-    ])
+schema = ad.Schema(
+    [ad.Field(f"c{i}", array.type, True) for i, array in enumerate(original_arrays)]
+)
 
-    import io
-    data = io.BytesIO()
-    pa.parquet.write_table(pa.table(arrays, schema), data)
-    data.seek(0)
-    return data
+data = io.BytesIO()
+with ad.ParquetFileWriter(data, schema) as writer:
+    writer.write(ad.Chunk(original_arrays))
+data.seek(0)
 
-
-parquet_file = _write_a_parquet()
-
-reader = arrowdantic.ParquetFileReader(parquet_file)
+reader = ad.ParquetFileReader(data)
 chunk = next(reader)
-assert len(chunk) == 3
-arrays = chunk.arrays()
-assert arrays[0] == arrowdantic.BooleanArray([True, None, False])
-assert list(arrays[0]) == [True, None, False]
+assert chunk.arrays() == original_arrays
+```
+
+### Use Arrow files
+
+```python
+import arrowdantic as ad
+
+original_arrays = [ad.UInt32Array([1, None])]
+
+schema = ad.Schema(
+    [ad.Field(f"c{i}", array.type, True) for i, array in enumerate(original_arrays)]
+)
+
+import io
+
+data = io.BytesIO()
+with ad.ArrowFileWriter(data, schema) as writer:
+    writer.write(ad.Chunk(original_arrays))
+data.seek(0)
+
+reader = ad.ArrowFileReader(data)
+chunk = next(reader)
+assert chunk.arrays() == original_arrays
+```
+
+### Use ODBC
+
+```python
+import arrowdantic as ad
+
+
+arrays = [ad.Int32Array([1, None]), ad.StringArray(["aa", None])]
+
+
+with ad.ODBCConnector(r"Driver={SQLite3};Database=sqlite-test.db") as con:
+    # create an empty table with a schema
+    con.execute("DROP TABLE IF EXISTS example;")
+    con.execute("CREATE TABLE example (c1 INT, c2 TEXT);")
+
+    # and insert the arrays
+    con.write("INSERT INTO example (c1, c2) VALUES (?, ?)", ad.Chunk(arrays))
+
+    chunks = con.execute("SELECT c1 FROM example", 1024)
+    assert chunks.fields() == [
+        ad.Field("c1", ad.DataType.int32(), True),
+        ad.Field("c2", ad.DataType.string(), True),
+    ]
+    chunk = next(chunks)
+assert chunk.arrays() == arrays
 ```

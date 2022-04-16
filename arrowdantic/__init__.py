@@ -305,6 +305,11 @@ class ArrowFileReader:
     def __init__(self, path_or_obj):
         self._reader = _arrowdantic_internal.ArrowFileReader(path_or_obj)
 
+    def schema(self) -> Schema:
+        schema = Schema()
+        schema._schema = self._reader.schema()
+        return schema
+
     def __iter__(self):
         return self
 
@@ -315,13 +320,10 @@ class ArrowFileReader:
 class ArrowFileWriter:
     """
     Context manager to write an Arrow IPC file. A file is composed by:
-    * a header
-    * multiple record batches
-    * a footer
 
-    the header is written when the context manager is entered,
-    each batch is written using ``write``, and the footer is written when the context
-    manager is exited.
+    * a header, written when the context manager is entered
+    * multiple record batches, written via ``write``
+    * a footer, written when the context manager exits
     """
 
     __slots__ = ("_writer", "_schema", "_path")
@@ -345,6 +347,7 @@ class ArrowFileWriter:
 
     def __exit__(self, _, __, ___):
         self._writer.__exit__()
+        self._writer = None
 
 
 class ParquetFileReader:
@@ -355,6 +358,11 @@ class ParquetFileReader:
     def __init__(self, path_or_obj):
         self._reader = _arrowdantic_internal.ParquetFileReader(path_or_obj)
 
+    def schema(self) -> Schema:
+        schema = Schema()
+        schema._schema = self._reader.schema()
+        return schema
+
     def __iter__(self):
         return self
 
@@ -362,26 +370,60 @@ class ParquetFileReader:
         return Chunk._from_chunk(self._reader.__next__())
 
 
+class ParquetFileWriter:
+    """
+    Context manager to write a Parquet file. A file is composed by:
+
+    * a header, written when the context manager is entered
+    * multiple record batches, written via ``write``
+    * a footer, written when the context manager exits
+    """
+
+    __slots__ = ("_writer", "_schema", "_path")
+
+    def __init__(self, path_or_obj, schema: Schema):
+        self._path = path_or_obj
+        self._schema = schema
+        self._writer = None
+
+    def __enter__(self) -> "ParquetFileWriter":
+        self._writer = _arrowdantic_internal.ParquetFileWriter(
+            self._path, self._schema._schema
+        )
+        return self
+
+    def write(self, chunk: Chunk):
+        """
+        Writes a ``Chunk`` into the file as a new row group
+        """
+        self._writer.write(chunk._chunk)
+
+    def __exit__(self, _, __, ___):
+        self._writer.__exit__()
+        self._writer = None
+
+
 class ODBCConnector:
     """
     Context manager to read and write an ODBC connection.
     """
 
-    __slots__ = ("_writer", "_connection_string")
+    __slots__ = ("_connection", "_connection_string")
 
     def __init__(self, connection_string: str):
         self._connection_string = connection_string
-        self._writer = None
+        self._connection: Optional[_arrowdantic_internal.ODBCConnector] = None
 
     def __enter__(self) -> "ODBCConnector":
-        self._writer = _arrowdantic_internal.ODBCConnector(self._connection_string)
+        self._connection = _arrowdantic_internal.ODBCConnector(self._connection_string)
         return self
 
-    def execute(self, statement: str, batch_size: int):
+    def execute(self, statement: str, batch_size: Optional[int] = None):
         """
-        Executes an SQL statement
+        Executes an SQL statement. When the statement is expected to return values, `batch_size` must
+        be provided.
         """
-        self._writer.execute(statement, batch_size)
+        self._connection.execute(statement, batch_size)
 
     def write(self, statement: str, chunk: Chunk):
         """
@@ -390,7 +432,7 @@ class ODBCConnector:
 
         Example: ``INSERT INTO table (c1, c2) VALUES (?, ?)`` with a chunk of 2 arrays.
         """
-        self._writer.write(statement, chunk._chunk)
+        self._connection.write(statement, chunk._chunk)
 
     def __exit__(self, _, __, ___):
-        self._writer = None
+        self._connection = None

@@ -1,9 +1,10 @@
 use pyo3::prelude::*;
 
 use arrow2::chunk::Chunk as _Chunk;
-use arrow2::datatypes::Field;
+use arrow2::datatypes::Field as _Field;
 use arrow2::io::odbc;
 
+use super::super::datatypes::Field;
 use super::super::Chunk;
 use super::super::Error;
 
@@ -35,7 +36,7 @@ impl ODBCConnector {
             .0
             .arrays()
             .iter()
-            .map(|array| Field::new("unused", array.data_type().clone(), array.null_count() > 0))
+            .map(|array| _Field::new("unused", array.data_type().clone(), array.null_count() > 0))
             .collect::<Vec<_>>();
 
         let mut writer = odbc::write::Writer::try_new(prepared, fields).map_err(Error)?;
@@ -44,7 +45,11 @@ impl ODBCConnector {
         Ok(())
     }
 
-    fn execute(slf: PyRef<Self>, query: &str, batch_size: usize) -> PyResult<Option<ODBCIterator>> {
+    fn execute(
+        slf: PyRef<Self>,
+        query: &str,
+        batch_size: Option<usize>,
+    ) -> PyResult<Option<ODBCIterator>> {
         let maybe_cursor = odbc::read::execute(&slf.0, query, (), batch_size).map_err(Error)?;
 
         Ok(maybe_cursor.map(ODBCIterator))
@@ -56,6 +61,10 @@ pub struct ODBCIterator(pub odbc::read::ChunkIterator<'static>);
 
 #[pymethods]
 impl ODBCIterator {
+    fn fields(slf: PyRef<Self>) -> Vec<Field> {
+        slf.0.fields().iter().cloned().map(Field).collect()
+    }
+
     fn __next__(mut slf: PyRefMut<Self>) -> PyResult<Option<Chunk>> {
         Ok(slf
             .0

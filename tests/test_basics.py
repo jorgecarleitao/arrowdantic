@@ -154,10 +154,29 @@ def test_ipc_round_trip():
     assert chunk.arrays() == original_arrays
 
 
-def test_sql_write():
+def test_parquet_round_trip():
+    original_arrays = [ad.UInt32Array([1, None])]
+
+    schema = ad.Schema(
+        [ad.Field(f"c{i}", array.type, True) for i, array in enumerate(original_arrays)]
+    )
+
+    import io
+
+    data = io.BytesIO()
+    with ad.ParquetFileWriter(data, schema) as writer:
+        writer.write(ad.Chunk(original_arrays))
+    data.seek(0)
+
+    reader = ad.ParquetFileReader(data)
+    chunk = next(reader)
+    assert chunk.arrays() == original_arrays
+
+
+def test_sql_roundtrip():
     arrays = [ad.Int32Array([1, None]), ad.StringArray(["aa", None])]
 
-    with ad.ODBCWriter(r"Driver={SQLite3};Database=sqlite-test.db") as con:
+    with ad.ODBCConnector(r"Driver={SQLite3};Database=sqlite-test.db") as con:
         # create an empty table with a schema
         con.execute("DROP TABLE IF EXISTS example;")
         con.execute("CREATE TABLE example (c1 INT, c2 TEXT);")
@@ -166,5 +185,9 @@ def test_sql_write():
         con.write("INSERT INTO example (c1, c2) VALUES (?, ?)", ad.Chunk(arrays))
 
         chunks = con.execute("SELECT c1 FROM example", 1024)
+        assert chunks.fields() == [
+            ad.Field("c1", ad.DataType.int32(), True),
+            ad.Field("c2", ad.DataType.string(), True),
+        ]
         chunk = next(chunks)
     assert chunk.arrays() == arrays
