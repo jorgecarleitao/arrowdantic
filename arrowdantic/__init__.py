@@ -374,7 +374,7 @@ class ODBCConnector:
         self._writer = None
 
     def __enter__(self) -> "ODBCConnector":
-        self._writer = _arrowdantic_internal.ODBCWriter(self._connection_string)
+        self._writer = _arrowdantic_internal.ODBCConnector(self._connection_string)
         return self
 
     def execute(self, statement: str, batch_size: int):

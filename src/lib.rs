@@ -58,7 +58,7 @@ fn _arrowdantic_internal(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<io::ArrowFileReader>()?;
     m.add_class::<io::ArrowFileWriter>()?;
     m.add_class::<io::ParquetFileReader>()?;
-    m.add_class::<io::ODBCWriter>()?;
+    m.add_class::<io::ODBCConnector>()?;
 
     m.add_class::<Int8Array>()?;
     m.add_class::<Int16Array>()?;

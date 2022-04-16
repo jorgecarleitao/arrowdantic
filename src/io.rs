@@ -99,10 +99,10 @@ static ENVIRONMENT: once_cell::sync::Lazy<odbc::api::Environment> =
     once_cell::sync::Lazy::new(|| odbc::api::Environment::new().unwrap());
 
 #[pyclass(unsendable)]
-pub struct ODBCWriter(odbc::api::Connection<'static>);
+pub struct ODBCConnector(odbc::api::Connection<'static>);
 
 #[pymethods]
-impl ODBCWriter {
+impl ODBCConnector {
     #[new]
     fn new(connection_string: String) -> PyResult<Self> {
         let connection = ENVIRONMENT
