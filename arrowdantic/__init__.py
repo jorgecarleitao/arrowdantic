@@ -2,7 +2,7 @@
 A Python library written in Rust to read from and write to Apache Arrow IPC (also known as feather)
 and Apache Parquet.
 """
-from typing import List, Optional
+from typing import Iterable, List, Optional
 
 import _arrowdantic_internal
 
@@ -314,7 +314,7 @@ class ArrowFileReader:
         return self
 
     def __next__(self):
-        return Chunk._from_chunk(self._reader.__next__())
+        return Chunk._from_chunk(next(self._reader))
 
 
 class ArrowFileWriter:
@@ -367,7 +367,7 @@ class ParquetFileReader:
         return self
 
     def __next__(self):
-        return Chunk._from_chunk(self._reader.__next__())
+        return Chunk._from_chunk(next(self._reader))
 
 
 class ParquetFileWriter:
@@ -418,12 +418,17 @@ class ODBCConnector:
         self._connection = _arrowdantic_internal.ODBCConnector(self._connection_string)
         return self
 
-    def execute(self, statement: str, batch_size: Optional[int] = None):
+    def execute(self, statement: str, batch_size: Optional[int] = None) -> Optional[Iterable[Chunk]]:
         """
         Executes an SQL statement. When the statement is expected to return values, `batch_size` must
         be provided.
         """
-        self._connection.execute(statement, batch_size)
+        iterator = self._connection.execute(statement, batch_size)
+        if iterator is None:
+            return None
+        else:
+            return ODBCChunkIter._from_iter(iterator)
+        return self._connection.execute(statement, batch_size)
 
     def write(self, statement: str, chunk: Chunk):
         """
@@ -436,3 +441,22 @@ class ODBCConnector:
 
     def __exit__(self, _, __, ___):
         self._connection = None
+
+
+class ODBCChunkIter:
+    def _from_iter(iter: _arrowdantic_internal.ODBCIterator) -> "ODBCChunkIter":
+        a = ODBCChunkIter()
+        a._iter = iter
+        return a
+
+    def fields(self) -> List[Field]:
+        return [Field._from_field(f) for f in self._iter.fields()]
+
+    def __enter__(self) -> "ODBCChunkIter":
+        return self
+    
+    def __exit__(self, _, __,___):
+        self._iter = None
+
+    def __next__(self) -> Chunk:
+        return Chunk._from_chunk(next(self._iter))

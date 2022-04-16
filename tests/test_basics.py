@@ -184,10 +184,10 @@ def test_sql_roundtrip():
         # and insert the arrays
         con.write("INSERT INTO example (c1, c2) VALUES (?, ?)", ad.Chunk(arrays))
 
-        chunks = con.execute("SELECT c1 FROM example", 1024)
-        assert chunks.fields() == [
-            ad.Field("c1", ad.DataType.int32(), True),
-            ad.Field("c2", ad.DataType.string(), True),
-        ]
-        chunk = next(chunks)
+        with con.execute("SELECT c1, c2 FROM example", 1024) as chunks:
+            assert chunks.fields() == [
+                ad.Field("c1", ad.DataType.int32(), True),
+                ad.Field("c2", ad.DataType.string(), True),
+                ]
+            chunk = next(chunks)    
     assert chunk.arrays() == arrays

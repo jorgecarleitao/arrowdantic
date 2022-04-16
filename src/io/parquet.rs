@@ -45,7 +45,7 @@ impl ParquetFileWriter {
     fn new(obj: PyObject, schema: Schema) -> PyResult<Self> {
         let writer = file_like::FileWriter::from_pyobject(obj)?;
 
-        let reader = parquet::write::FileWriter::try_new(
+        let mut reader = parquet::write::FileWriter::try_new(
             writer,
             schema.0,
             parquet::write::WriteOptions {
@@ -55,6 +55,8 @@ impl ParquetFileWriter {
             },
         )
         .map_err(Error)?;
+
+        reader.start().map_err(Error)?;
 
         Ok(Self(reader))
     }
@@ -69,11 +71,6 @@ impl ParquetFileWriter {
             slf.0.options(),
         );
         Ok(slf.0.write(row_group).map_err(Error)?)
-    }
-
-    fn __enter__(mut slf: PyRefMut<Self>) -> PyResult<PyRefMut<Self>> {
-        slf.0.start().map_err(Error)?;
-        Ok(slf)
     }
 
     fn __exit__(mut slf: PyRefMut<Self>) -> PyResult<()> {
