@@ -8,6 +8,15 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install Rust
       run: rustup update stable
+    - name: Install SQLLite3
+      run: sudo apt-get install libsqliteodbc unixodbc
+    - name: Configure ODBC
+      run: |
+        sudo sh -c 'echo "[SQLite3]
+        Description=SQLite3 ODBC Driver
+        Driver=libsqlite3odbc.so
+        Setup=libsqlite3odbc.so
+        UsageCount=1" > /etc/odbcinst.ini'
     - uses: Swatinem/rust-cache@v1
     - uses: actions/setup-python@v2
       with:
