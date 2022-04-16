@@ -418,7 +418,9 @@ class ODBCConnector:
         self._connection = _arrowdantic_internal.ODBCConnector(self._connection_string)
         return self
 
-    def execute(self, statement: str, batch_size: Optional[int] = None) -> Optional[Iterable[Chunk]]:
+    def execute(
+        self, statement: str, batch_size: Optional[int] = None
+    ) -> Optional[Iterable[Chunk]]:
         """
         Executes an SQL statement. When the statement is expected to return values, `batch_size` must
         be provided.
@@ -454,8 +456,8 @@ class ODBCChunkIter:
 
     def __enter__(self) -> "ODBCChunkIter":
         return self
-    
-    def __exit__(self, _, __,___):
+
+    def __exit__(self, _, __, ___):
         self._iter = None
 
     def __next__(self) -> Chunk:

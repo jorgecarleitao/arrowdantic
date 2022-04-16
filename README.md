@@ -79,20 +79,20 @@ import arrowdantic as ad
 
 arrays = [ad.Int32Array([1, None]), ad.StringArray(["aa", None])]
 
-
 with ad.ODBCConnector(r"Driver={SQLite3};Database=sqlite-test.db") as con:
     # create an empty table with a schema
     con.execute("DROP TABLE IF EXISTS example;")
     con.execute("CREATE TABLE example (c1 INT, c2 TEXT);")
 
-    # and insert the arrays
+    # insert the arrays
     con.write("INSERT INTO example (c1, c2) VALUES (?, ?)", ad.Chunk(arrays))
 
-    chunks = con.execute("SELECT c1 FROM example", 1024)
-    assert chunks.fields() == [
-        ad.Field("c1", ad.DataType.int32(), True),
-        ad.Field("c2", ad.DataType.string(), True),
-    ]
-    chunk = next(chunks)
+    # read the arrays
+    with con.execute("SELECT c1, c2 FROM example", 1024) as chunks:
+        assert chunks.fields() == [
+            ad.Field("c1", ad.DataType.int32(), True),
+            ad.Field("c2", ad.DataType.string(), True),
+        ]
+        chunk = next(chunks)
 assert chunk.arrays() == arrays
 ```

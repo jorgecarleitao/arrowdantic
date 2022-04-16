@@ -181,13 +181,14 @@ def test_sql_roundtrip():
         con.execute("DROP TABLE IF EXISTS example;")
         con.execute("CREATE TABLE example (c1 INT, c2 TEXT);")
 
-        # and insert the arrays
+        # insert the arrays
         con.write("INSERT INTO example (c1, c2) VALUES (?, ?)", ad.Chunk(arrays))
 
+        # read the arrays
         with con.execute("SELECT c1, c2 FROM example", 1024) as chunks:
             assert chunks.fields() == [
                 ad.Field("c1", ad.DataType.int32(), True),
                 ad.Field("c2", ad.DataType.string(), True),
-                ]
-            chunk = next(chunks)    
+            ]
+            chunk = next(chunks)
     assert chunk.arrays() == arrays
