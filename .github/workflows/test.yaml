@@ -14,8 +14,8 @@ jobs:
       run: |
         sudo sh -c 'echo "[SQLite3]
         Description=SQLite3 ODBC Driver
-        Driver=libsqlite3odbc.so
-        Setup=libsqlite3odbc.so
+        Driver=/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so
+        Setup=/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so
         UsageCount=1" > /etc/odbcinst.ini'
     - uses: Swatinem/rust-cache@v1
     - uses: actions/setup-python@v2
