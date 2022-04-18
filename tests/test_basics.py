@@ -1,3 +1,5 @@
+import datetime
+
 import arrowdantic as ad
 import pyarrow as pa
 import pyarrow.parquet
@@ -51,6 +53,26 @@ def test_schema():
     fields = [ad.Field("c1", ad.DataType.int32(), True)]
     schema = ad.Schema(fields)
     assert schema.fields == fields
+
+
+def test_datetime():
+    dt = datetime.datetime(
+        year=2021,
+        month=1,
+        day=1,
+        hour=1,
+        minute=1,
+        second=1,
+        microsecond=1,
+        tzinfo=datetime.timezone.utc,
+    )
+    a = ad.TimestampArray([dt, None])
+    assert (
+        str(a)
+        == 'Timestamp(Microsecond, Some("+00:00"))[2021-01-01 01:01:01.000001 +00:00, None]'
+    )
+    assert list(a) == [dt, None]
+    assert a.type == ad.DataType.timestamp(datetime.timezone.utc)
 
 
 def test_ipc_read():

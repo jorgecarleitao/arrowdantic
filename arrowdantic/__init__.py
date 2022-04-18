@@ -3,6 +3,7 @@ A Python library written in Rust to read from and write to Apache Arrow IPC (als
 and Apache Parquet.
 """
 from typing import Iterable, List, Optional
+import datetime
 
 import _arrowdantic_internal
 
@@ -67,6 +68,20 @@ class DataType:
     @classmethod
     def large_string(cls) -> "DataType":
         return cls._from_type(_arrowdantic_internal.DataType.large_string())
+
+    @classmethod
+    def binary(cls) -> "DataType":
+        return cls._from_type(_arrowdantic_internal.DataType.binary())
+
+    @classmethod
+    def large_binary(cls) -> "DataType":
+        return cls._from_type(_arrowdantic_internal.DataType.large_binary())
+
+    @classmethod
+    def timestamp(cls, tz: Optional[datetime.tzinfo] = None) -> "DataType":
+        if tz:
+            tz = _format_offset(tz.utcoffset(None))
+        return cls._from_type(_arrowdantic_internal.DataType.timestamp(tz))
 
     @classmethod
     def _from_type(cls, dt: _arrowdantic_internal.DataType) -> "DataType":
@@ -192,6 +207,51 @@ class Int64Array(Array):
 
     def __init__(self, values: List[Optional[int]]):
         self._array = _arrowdantic_internal.Int64Array(values)
+
+
+class TimestampArray(Array):
+    """An array of 64-bit signed integers each representing a datetime with the same timezone"""
+
+    __slots__ = ("_tz",)
+
+    def __init__(self, values: List[Optional[datetime.datetime]]):
+        def _transform(value: Optional[datetime.datetime]):
+            if value is None:
+                return None
+            else:
+                seconds = value.timestamp()
+                microseconds = int(seconds * 10**6)
+                return microseconds
+
+        if not values:
+            tz = None
+            self._tz = None
+        else:
+            tz = values[0].timetz()
+            self._tz = tz.tzinfo
+            tz = _format_offset(tz.utcoffset())
+
+        values = list(map(_transform, values))
+        self._array = _arrowdantic_internal.Int64Array.from_ts_us(values, tz)
+
+    def __iter__(self):
+        return TimestampIterator(self._array.__iter__(), self._tz)
+
+
+class TimestampIterator:
+    __slots__ = ("_iter", "_tz")
+
+    def __init__(self, iter, tz):
+        self._iter = iter
+        self._tz = tz
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        dt_i64 = next(self._iter)
+        if dt_i64:
+            return datetime.datetime.fromtimestamp(dt_i64 / 10**6, self._tz)
 
 
 class Float32Array(Array):
@@ -462,3 +522,23 @@ class ODBCChunkIter:
 
     def __next__(self) -> Chunk:
         return Chunk._from_chunk(next(self._iter))
+
+
+def _format_offset(off):
+    # copied from std - it is private there :/
+    s = ""
+    if off is not None:
+        if off.days < 0:
+            sign = "-"
+            off = -off
+        else:
+            sign = "+"
+        hh, mm = divmod(off, datetime.timedelta(hours=1))
+        mm, ss = divmod(mm, datetime.timedelta(minutes=1))
+        s += "%s%02d:%02d" % (sign, hh, mm)
+        if ss or ss.microseconds:
+            s += ":%02d" % ss.seconds
+
+            if ss.microseconds:
+                s += ".%06d" % ss.microseconds
+    return s

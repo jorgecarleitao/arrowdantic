@@ -1,6 +1,6 @@
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyType};
 
-use arrow2::datatypes::{DataType as _DataType, Field as _Field, Schema as _Schema};
+use arrow2::datatypes::{DataType as _DataType, Field as _Field, Schema as _Schema, TimeUnit};
 
 #[derive(Clone, PartialEq, Debug)]
 #[pyclass]
@@ -46,6 +46,11 @@ impl DataType {
     #[classmethod]
     fn large_binary(_: &PyType) -> Self {
         Self(_DataType::LargeBinary)
+    }
+
+    #[classmethod]
+    fn timestamp(_: &PyType, tz: Option<String>) -> Self {
+        Self(_DataType::Timestamp(TimeUnit::Microsecond, tz))
     }
 
     fn __repr__(&self) -> String {

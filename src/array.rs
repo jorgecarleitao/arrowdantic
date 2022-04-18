@@ -5,11 +5,11 @@ use arrow2::{
         Array, BinaryArray as _BinaryArray, BooleanArray as _BooleanArray, PrimitiveArray,
         Utf8Array,
     },
-    datatypes::PhysicalType,
+    datatypes::{DataType, PhysicalType, TimeUnit},
 };
 
-use pyo3::class::basic::CompareOp;
 use pyo3::prelude::*;
+use pyo3::{class::basic::CompareOp, types::PyType};
 
 use super::datatypes;
 use super::iterator;
@@ -76,9 +76,68 @@ primitive!(UInt64Array, UInt64Iterator, u64);
 primitive!(Int8Array, Int8Iterator, i8);
 primitive!(Int16Array, Int16Iterator, i16);
 primitive!(Int32Array, Int32Iterator, i32);
-primitive!(Int64Array, Int64Iterator, i64);
+//primitive!(Int64Array, Int64Iterator, i64);
 primitive!(Float32Array, Float32Iterator, f32);
 primitive!(Float64Array, Float64Iterator, f64);
+
+#[derive(Clone, PartialEq, Debug)]
+#[pyclass]
+pub struct Int64Array(pub PrimitiveArray<i64>);
+
+#[pymethods]
+impl Int64Array {
+    #[new]
+    fn new(values: &PyAny) -> PyResult<Self> {
+        if let Ok(values) = values.extract::<Vec<i64>>() {
+            Ok(Self(PrimitiveArray::<i64>::from_vec(values)))
+        } else if let Ok(values) = values.extract::<Vec<Option<i64>>>() {
+            Ok(Self(PrimitiveArray::<i64>::from(values)))
+        } else {
+            todo!()
+        }
+    }
+
+    fn __repr__(&self) -> String {
+        format!("{:?}", &self.0 as &dyn Array)
+    }
+
+    fn __str__(&self) -> String {
+        self.__repr__()
+    }
+
+    fn __len__(&self) -> usize {
+        self.0.len()
+    }
+
+    fn __iter__(slf: PyRef<Self>) -> iterator::Int64Iterator {
+        iterator::Int64Iterator::new(slf)
+    }
+
+    #[getter(type)]
+    fn dtype(&self) -> datatypes::DataType {
+        datatypes::DataType(self.0.data_type().clone())
+    }
+
+    fn __richcmp__(&self, py: Python, other: PyObject, op: CompareOp) -> PyResult<bool> {
+        Ok(if let Ok(other) = other.extract::<Int64Array>(py) {
+            match op {
+                CompareOp::Eq => self.0 == other.0,
+                CompareOp::Ne => self.0 != other.0,
+                _ => todo!(),
+            }
+        } else {
+            false
+        })
+    }
+
+    #[classmethod]
+    fn from_ts_us(_: &PyType, values: &PyAny, tz: Option<String>) -> PyResult<Self> {
+        let values = Self::new(values)?;
+        Ok(Self(
+            values.0.to(DataType::Timestamp(TimeUnit::Microsecond, tz)),
+        ))
+    }
+}
 
 #[derive(Clone, PartialEq, Debug)]
 #[pyclass]
@@ -129,16 +188,6 @@ impl BooleanArray {
             false
         })
     }
-}
-
-macro_rules! primitive {
-    ($array:expr, $py:expr,$type:ty, $local:ident) => {{
-        let array = $array
-            .as_any()
-            .downcast_ref::<PrimitiveArray<$type>>()
-            .unwrap();
-        $local(array.clone()).into_py($py)
-    }};
 }
 
 macro_rules! binary {
@@ -256,6 +305,16 @@ macro_rules! string {
 
 string!(StringArray, StringIterator, i32);
 string!(LargeStringArray, LargeStringIterator, i64);
+
+macro_rules! primitive {
+    ($array:expr, $py:expr,$type:ty, $local:ident) => {{
+        let array = $array
+            .as_any()
+            .downcast_ref::<PrimitiveArray<$type>>()
+            .unwrap();
+        $local(array.clone()).into_py($py)
+    }};
+}
 
 pub fn to_py_object(py: Python, array: &dyn Array) -> PyObject {
     use arrow2::datatypes::PrimitiveType::*;
