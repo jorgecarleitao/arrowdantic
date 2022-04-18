@@ -75,6 +75,14 @@ def test_datetime():
     assert a.type == ad.DataType.timestamp(datetime.timezone.utc)
 
 
+def test_date():
+    dt = datetime.date(year=2021, month=1, day=1)
+    a = ad.DateArray([dt, None])
+    assert str(a) == "Date32[2021-01-01, None]"
+    assert list(a) == [dt, None]
+    assert a.type == ad.DataType.date()
+
+
 def test_ipc_read():
     arrays = [
         pa.array([True, None, False], type=pa.bool_()),

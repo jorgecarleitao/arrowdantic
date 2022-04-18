@@ -84,6 +84,10 @@ class DataType:
         return cls._from_type(_arrowdantic_internal.DataType.timestamp(tz))
 
     @classmethod
+    def date(cls) -> "DataType":
+        return cls._from_type(_arrowdantic_internal.DataType.date())
+
+    @classmethod
     def _from_type(cls, dt: _arrowdantic_internal.DataType) -> "DataType":
         a = DataType()
         a._dt = dt
@@ -209,7 +213,7 @@ class Int64Array(Array):
         self._array = _arrowdantic_internal.Int64Array(values)
 
 
-class TimestampArray(Array):
+class TimestampArray(Int64Array):
     """An array of 64-bit signed integers each representing a datetime with the same timezone"""
 
     __slots__ = ("_tz",)
@@ -252,6 +256,40 @@ class TimestampIterator:
         dt_i64 = next(self._iter)
         if dt_i64:
             return datetime.datetime.fromtimestamp(dt_i64 / 10**6, self._tz)
+
+
+_DATE_EPOCH = datetime.datetime.utcfromtimestamp(0).date()
+
+class DateArray(Int32Array):
+    """An array of 32-bit signed integers each representing the day since epoch"""
+
+    def __init__(self, values: List[Optional[datetime.date]]):
+        def _transform(value: Optional[datetime.date]):
+            if value is None:
+                return None
+            else:
+                return (value - _DATE_EPOCH).days
+
+        values = list(map(_transform, values))
+        self._array = _arrowdantic_internal.Int32Array.from_date(values)
+
+    def __iter__(self):
+        return DateIterator(self._array.__iter__())
+
+
+class DateIterator:
+    __slots__ = ("_iter")
+
+    def __init__(self, iter):
+        self._iter = iter
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        dt_i32 = next(self._iter)
+        if dt_i32:
+            return _DATE_EPOCH + datetime.timedelta(days=dt_i32)
 
 
 class Float32Array(Array):
