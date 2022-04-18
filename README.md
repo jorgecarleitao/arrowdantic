@@ -14,8 +14,8 @@ higher performance and higher safety (e.g. no segfaults).
 Furthermore, it supports reading from and writing to ODBC compliant databases at
 the same or higher performance than [`turbodbc`](https://turbodbc.readthedocs.io/en/latest/).
 
-This package is also suitable for environments such as AWS Lambda functions. It takes 13M of disk
-space, compared to 82M taken by pyarrow.
+This package is particularly suitable for environments such as AWS Lambda -
+it takes 8M of disk space, compared to 82M taken by pyarrow.
 
 ## Features
 
