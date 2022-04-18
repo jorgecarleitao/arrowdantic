@@ -83,6 +83,14 @@ def test_date():
     assert a.type == ad.DataType.date()
 
 
+def test_time():
+    dt = datetime.time(hour=22, minute=1, second=1, microsecond=1)
+    a = ad.TimeArray([dt, None])
+    assert str(a) == "Time64(Microsecond)[22:01:01.000001, None]"
+    assert list(a) == [dt, None]
+    assert a.type == ad.DataType.time()
+
+
 def test_ipc_read():
     arrays = [
         pa.array([True, None, False], type=pa.bool_()),

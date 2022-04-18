@@ -137,6 +137,12 @@ impl Int64Array {
             values.0.to(DataType::Timestamp(TimeUnit::Microsecond, tz)),
         ))
     }
+
+    #[classmethod]
+    fn from_time_us(_: &PyType, values: &PyAny) -> PyResult<Self> {
+        let values = Self::new(values)?;
+        Ok(Self(values.0.to(DataType::Time64(TimeUnit::Microsecond))))
+    }
 }
 
 #[derive(Clone, PartialEq, Debug)]

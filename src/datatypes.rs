@@ -58,6 +58,11 @@ impl DataType {
         Self(_DataType::Date32)
     }
 
+    #[classmethod]
+    fn time(_: &PyType) -> Self {
+        Self(_DataType::Time64(TimeUnit::Microsecond))
+    }
+
     fn __repr__(&self) -> String {
         format!("{:?}", &self.0)
     }
