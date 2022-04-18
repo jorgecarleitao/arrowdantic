@@ -88,6 +88,10 @@ class DataType:
         return cls._from_type(_arrowdantic_internal.DataType.date())
 
     @classmethod
+    def time(cls) -> "DataType":
+        return cls._from_type(_arrowdantic_internal.DataType.time())
+
+    @classmethod
     def _from_type(cls, dt: _arrowdantic_internal.DataType) -> "DataType":
         a = DataType()
         a._dt = dt
@@ -290,6 +294,40 @@ class DateIterator:
         dt_i32 = next(self._iter)
         if dt_i32:
             return _DATE_EPOCH + datetime.timedelta(days=dt_i32)
+
+
+
+class TimeArray(Int64Array):
+    """An array of 64-bit signed integers each representing the naive time since midnight with microsecond precision"""
+
+    def __init__(self, values: List[Optional[datetime.time]]):
+        def _transform(value: Optional[datetime.time]):
+            if value is None:
+                return None
+            else:
+                return ((value.hour * 60 + value.minute) * 60 + value.second) * 10**6 + value.microsecond
+
+        values = list(map(_transform, values))
+        self._array = _arrowdantic_internal.Int64Array.from_time_us(values)
+
+    def __iter__(self):
+        return TimeIterator(self._array.__iter__())
+
+
+class TimeIterator:
+    __slots__ = ("_iter")
+
+    def __init__(self, iter):
+        self._iter = iter
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        time_us = next(self._iter)
+        if time_us:
+            return datetime.datetime.fromtimestamp(time_us / 10**6).time()
+
 
 
 class Float32Array(Array):
