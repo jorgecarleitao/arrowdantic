@@ -96,3 +96,30 @@ with ad.ODBCConnector(r"Driver={SQLite3};Database=sqlite-test.db") as con:
         chunk = next(chunks)
 assert chunk.arrays() == arrays
 ```
+
+### Use timezones
+
+This package fully supports datetime and conversions between them and arrow:
+
+```python
+import arrowdantic as ad
+
+
+dt = datetime.datetime(
+    year=2021,
+    month=1,
+    day=1,
+    hour=1,
+    minute=1,
+    second=1,
+    microsecond=1,
+    tzinfo=datetime.timezone.utc,
+)
+a = ad.TimestampArray([dt, None])
+assert (
+    str(a)
+    == 'Timestamp(Microsecond, Some("+00:00"))[2021-01-01 01:01:01.000001 +00:00, None]'
+)
+assert list(a) == [dt, None]
+assert a.type == ad.DataType.timestamp(datetime.timezone.utc)
+```

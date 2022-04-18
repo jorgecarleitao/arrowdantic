@@ -75,7 +75,7 @@ primitive!(UInt32Array, UInt32Iterator, u32);
 primitive!(UInt64Array, UInt64Iterator, u64);
 primitive!(Int8Array, Int8Iterator, i8);
 primitive!(Int16Array, Int16Iterator, i16);
-primitive!(Int32Array, Int32Iterator, i32);
+//primitive!(Int32Array, Int32Iterator, i32);
 //primitive!(Int64Array, Int64Iterator, i64);
 primitive!(Float32Array, Float32Iterator, f32);
 primitive!(Float64Array, Float64Iterator, f64);
@@ -136,6 +136,63 @@ impl Int64Array {
         Ok(Self(
             values.0.to(DataType::Timestamp(TimeUnit::Microsecond, tz)),
         ))
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+#[pyclass]
+pub struct Int32Array(pub PrimitiveArray<i32>);
+
+#[pymethods]
+impl Int32Array {
+    #[new]
+    fn new(values: &PyAny) -> PyResult<Self> {
+        if let Ok(values) = values.extract::<Vec<i32>>() {
+            Ok(Self(PrimitiveArray::<i32>::from_vec(values)))
+        } else if let Ok(values) = values.extract::<Vec<Option<i32>>>() {
+            Ok(Self(PrimitiveArray::<i32>::from(values)))
+        } else {
+            todo!()
+        }
+    }
+
+    fn __repr__(&self) -> String {
+        format!("{:?}", &self.0 as &dyn Array)
+    }
+
+    fn __str__(&self) -> String {
+        self.__repr__()
+    }
+
+    fn __len__(&self) -> usize {
+        self.0.len()
+    }
+
+    fn __iter__(slf: PyRef<Self>) -> iterator::Int32Iterator {
+        iterator::Int32Iterator::new(slf)
+    }
+
+    #[getter(type)]
+    fn dtype(&self) -> datatypes::DataType {
+        datatypes::DataType(self.0.data_type().clone())
+    }
+
+    fn __richcmp__(&self, py: Python, other: PyObject, op: CompareOp) -> PyResult<bool> {
+        Ok(if let Ok(other) = other.extract::<Int32Array>(py) {
+            match op {
+                CompareOp::Eq => self.0 == other.0,
+                CompareOp::Ne => self.0 != other.0,
+                _ => todo!(),
+            }
+        } else {
+            false
+        })
+    }
+
+    #[classmethod]
+    fn from_date(_: &PyType, values: &PyAny) -> PyResult<Self> {
+        let values = Self::new(values)?;
+        Ok(Self(values.0.to(DataType::Date32)))
     }
 }
 
