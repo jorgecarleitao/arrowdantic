@@ -1,6 +1,6 @@
 use pyo3::{exceptions::PyOSError, PyErr};
 
-pub struct Error(pub arrow2::error::ArrowError);
+pub struct Error(pub arrow2::error::Error);
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -8,8 +8,8 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl From<arrow2::error::ArrowError> for Error {
-    fn from(err: arrow2::error::ArrowError) -> Error {
+impl From<arrow2::error::Error> for Error {
+    fn from(err: arrow2::error::Error) -> Error {
         Error(err)
     }
 }

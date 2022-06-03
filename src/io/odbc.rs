@@ -20,7 +20,7 @@ impl ODBCConnector {
     fn new(connection_string: String) -> PyResult<Self> {
         let connection = ENVIRONMENT
             .connect_with_connection_string(&connection_string)
-            .map_err(arrow2::error::ArrowError::from_external_error)
+            .map_err(arrow2::error::Error::from_external_error)
             .map_err(Error)?;
         Ok(Self(connection))
     }
@@ -29,7 +29,7 @@ impl ODBCConnector {
         let prepared = slf
             .0
             .prepare(query)
-            .map_err(arrow2::error::ArrowError::from_external_error)
+            .map_err(arrow2::error::Error::from_external_error)
             .map_err(Error)?;
 
         let fields = chunk

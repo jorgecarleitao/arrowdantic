@@ -45,31 +45,32 @@ impl ParquetFileWriter {
     fn new(obj: PyObject, schema: Schema) -> PyResult<Self> {
         let writer = file_like::FileWriter::from_pyobject(obj)?;
 
-        let mut reader = parquet::write::FileWriter::try_new(
+        let reader = parquet::write::FileWriter::try_new(
             writer,
             schema.0,
             parquet::write::WriteOptions {
                 version: parquet::write::Version::V2,
                 write_statistics: true,
-                compression: parquet::write::Compression::Uncompressed,
+                compression: parquet::write::CompressionOptions::Uncompressed,
             },
         )
         .map_err(Error)?;
-
-        reader.start().map_err(Error)?;
 
         Ok(Self(reader))
     }
 
     fn write(mut slf: PyRefMut<Self>, chunk: PyRef<Chunk>) -> PyResult<()> {
-        let encodings = vec![parquet::write::Encoding::Plain; chunk.0.arrays().len()];
-        let descriptors = slf.0.parquet_schema().columns().to_vec();
-        let row_group = parquet::write::row_group_iter(
-            chunk.0.clone(),
-            encodings,
-            descriptors,
-            slf.0.options(),
-        );
+        let encodings = chunk
+            .0
+            .arrays()
+            .iter()
+            .map(|array| {
+                parquet::write::transverse(array.data_type(), |_| parquet::write::Encoding::Plain)
+            })
+            .collect::<Vec<_>>();
+        let fields = slf.0.parquet_schema().fields().to_vec();
+        let row_group =
+            parquet::write::row_group_iter(chunk.0.clone(), encodings, fields, slf.0.options());
         Ok(slf.0.write(row_group).map_err(Error)?)
     }
 

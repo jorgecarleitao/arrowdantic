@@ -10,7 +10,7 @@ repository = "https://github.com/jorgecarleitao/arrowdantic"
 edition = "2021"
 
 [lib]
-name = "_arrowdantic_internal"
+name = "arrowdantic"
 crate-type = ["cdylib"]
 
 [dependencies]
