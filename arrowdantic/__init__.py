@@ -5,7 +5,7 @@ and Apache Parquet.
 from typing import Iterable, List, Optional
 import datetime
 
-import _arrowdantic_internal
+import arrowdantic.arrowdantic as _arrowdantic_internal
 
 
 class DataType:

@@ -52,7 +52,7 @@ impl Chunk {
 }
 
 #[pymodule]
-fn _arrowdantic_internal(_py: Python, m: &PyModule) -> PyResult<()> {
+fn arrowdantic(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Chunk>()?;
 
     m.add_class::<io::ArrowFileReader>()?;
