@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.1](https://github.com/jorgecarleitao/arrowdantic/tree/v0.2.1) (2022-06-03)
+
+[Full Changelog](https://github.com/jorgecarleitao/arrowdantic/compare/v0.2.0...v0.2.1)
+
+**Enhancements:**
+
+- Bumped dependencies [\#4](https://github.com/jorgecarleitao/arrowdantic/pull/4) ([jorgecarleitao](https://github.com/jorgecarleitao))
+
 ## [v0.2.0](https://github.com/jorgecarleitao/arrowdantic/tree/v0.2.0) (2022-04-18)
 
 [Full Changelog](https://github.com/jorgecarleitao/arrowdantic/compare/v0.1.0...v0.2.0)
