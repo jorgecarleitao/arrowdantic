@@ -6,8 +6,6 @@ mod io;
 mod iterator;
 mod py_file;
 
-use std::sync::Arc;
-
 use pyo3::prelude::*;
 
 use arrow2::array::Array;
@@ -17,7 +15,7 @@ use array::*;
 use error::Error;
 
 #[pyclass]
-struct Chunk(pub _Chunk<Arc<dyn Array>>);
+struct Chunk(pub _Chunk<Box<dyn Array>>);
 
 #[pymethods]
 impl Chunk {
