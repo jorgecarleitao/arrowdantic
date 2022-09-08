@@ -7,6 +7,7 @@ use arrow2::{
 };
 
 use pyo3::prelude::*;
+use pyo3::types::PyIterator;
 use pyo3::{class::basic::CompareOp, types::PyType};
 
 use super::datatypes;
@@ -26,6 +27,11 @@ macro_rules! primitive {
                     Ok(Self(PrimitiveArray::<$type>::from_vec(values)))
                 } else if let Ok(values) = values.extract::<Vec<Option<$type>>>() {
                     Ok(Self(PrimitiveArray::<$type>::from(values)))
+                } else if let Ok(values) = values.extract::<&PyIterator>() {
+                    values
+                        .map(|x| x.and_then(|x| x.extract::<Option<$type>>()))
+                        .collect::<Result<PrimitiveArray<$type>, _>>()
+                        .map(Self)
                 } else {
                     todo!()
                 }
@@ -90,6 +96,11 @@ impl Int64Array {
             Ok(Self(PrimitiveArray::<i64>::from_vec(values)))
         } else if let Ok(values) = values.extract::<Vec<Option<i64>>>() {
             Ok(Self(PrimitiveArray::<i64>::from(values)))
+        } else if let Ok(values) = values.extract::<&PyIterator>() {
+            values
+                .map(|x| x.and_then(|x| x.extract::<Option<i64>>()))
+                .collect::<Result<PrimitiveArray<i64>, _>>()
+                .map(Self)
         } else {
             todo!()
         }
@@ -155,6 +166,11 @@ impl Int32Array {
             Ok(Self(PrimitiveArray::<i32>::from_vec(values)))
         } else if let Ok(values) = values.extract::<Vec<Option<i32>>>() {
             Ok(Self(PrimitiveArray::<i32>::from(values)))
+        } else if let Ok(values) = values.extract::<&PyIterator>() {
+            values
+                .map(|x| x.and_then(|x| x.extract::<Option<i32>>()))
+                .collect::<Result<PrimitiveArray<i32>, _>>()
+                .map(Self)
         } else {
             todo!()
         }
@@ -208,13 +224,18 @@ pub struct BooleanArray(pub _BooleanArray);
 impl BooleanArray {
     #[new]
     fn new(values: &PyAny) -> PyResult<Self> {
-        Ok(if let Ok(values) = values.extract::<Vec<bool>>() {
-            Self(_BooleanArray::from_slice(values))
+        if let Ok(values) = values.extract::<Vec<bool>>() {
+            Ok(Self(_BooleanArray::from_slice(values)))
         } else if let Ok(values) = values.extract::<Vec<Option<bool>>>() {
-            Self(_BooleanArray::from(values))
+            Ok(Self(_BooleanArray::from(values)))
+        } else if let Ok(values) = values.extract::<&PyIterator>() {
+            values
+                .map(|x| x.and_then(|x| x.extract::<Option<bool>>()))
+                .collect::<Result<_BooleanArray, _>>()
+                .map(Self)
         } else {
             todo!()
-        })
+        }
     }
 
     fn __repr__(&self) -> String {
@@ -265,6 +286,11 @@ macro_rules! binary {
                     Ok(Self(_BinaryArray::<$type>::from_slice(values)))
                 } else if let Ok(values) = values.extract::<Vec<Option<&[u8]>>>() {
                     Ok(Self(_BinaryArray::<$type>::from(values)))
+                } else if let Ok(values) = values.extract::<&PyIterator>() {
+                    values
+                        .map(|x| x.and_then(|x| x.extract::<Option<&[u8]>>()))
+                        .collect::<Result<_BinaryArray<$type>, _>>()
+                        .map(Self)
                 } else {
                     todo!()
                 }
@@ -323,6 +349,11 @@ macro_rules! string {
                     Ok(Self(Utf8Array::<$type>::from_slice(values)))
                 } else if let Ok(values) = values.extract::<Vec<Option<&str>>>() {
                     Ok(Self(Utf8Array::<$type>::from(values)))
+                } else if let Ok(values) = values.extract::<&PyIterator>() {
+                    values
+                        .map(|x| x.and_then(|x| x.extract::<Option<&str>>()))
+                        .collect::<Result<Utf8Array<$type>, _>>()
+                        .map(Self)
                 } else {
                     todo!()
                 }

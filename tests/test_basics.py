@@ -15,6 +15,11 @@ def test_int32():
     assert len(a) == 2
     assert list(a) == [1, None]
 
+    a = ad.Int32Array(iter(range(2)))
+    assert str(a) == "Int32[0, 1]"
+    assert len(a) == 2
+    assert list(a) == [0, 1]
+
 
 def test_uint32():
     a = ad.UInt32Array([1, 2])
@@ -37,6 +42,11 @@ def test_boolean():
     assert len(a) == 2
     assert list(a) == [True, None]
 
+    a = ad.BooleanArray(iter([True, None, False]))
+    assert str(a) == "BooleanArray[true, None, false]"
+    assert len(a) == 3
+    assert list(a) == [True, None, False]
+
 
 def test_string():
     a = ad.StringArray(["a", "b"])
@@ -47,6 +57,27 @@ def test_string():
     assert str(a) == "Utf8Array[a, None]"
     assert len(a) == 2
     assert list(a) == ["a", None]
+
+    a = ad.StringArray(iter(["a", None]))
+    assert str(a) == "Utf8Array[a, None]"
+    assert len(a) == 2
+    assert list(a) == ["a", None]
+
+
+def test_binary():
+    a = ad.BinaryArray([b"a", b"b"])
+    assert str(a) == "BinaryArray[[97], [98]]"
+    assert a.type == ad.DataType.binary()
+
+    a = ad.BinaryArray([b"a", None])
+    assert str(a) == "BinaryArray[[97], None]"
+    assert len(a) == 2
+    assert list(a) == [b"a", None]
+
+    a = ad.BinaryArray(iter([b"a", None]))
+    assert str(a) == "BinaryArray[[97], None]"
+    assert len(a) == 2
+    assert list(a) == [b"a", None]
 
 
 def test_schema():
