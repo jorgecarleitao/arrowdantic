@@ -2,6 +2,7 @@ use arrow2::array::{
     Array, BinaryArray as _BinaryArray, BooleanArray as _BooleanArray, PrimitiveArray, Utf8Array,
 };
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 
 use super::array::*;
 
@@ -124,12 +125,14 @@ macro_rules! binary {
                 Self(array.0.clone(), 0)
             }
 
-            fn __next__(mut slf: PyRefMut<Self>) -> Option<Option<Vec<u8>>> {
+            fn __next__(mut slf: PyRefMut<Self>) -> Option<Option<PyObject>> {
                 let index = slf.1;
                 let array = &slf.0;
                 if index < array.len() {
                     let r = Some(if array.is_valid(index) {
-                        Some(array.value(index).to_vec())
+                        Python::with_gil(|py| {
+                            Some(array.value(index)).map(|r| PyBytes::new(py, r).into())
+                        })
                     } else {
                         None
                     });

@@ -17,7 +17,7 @@ impl ArrowFileReader {
         let mut reader = file_like::FileReader::from_pyobject(obj)?;
 
         let metadata = ipc::read::read_file_metadata(&mut reader).map_err(Error)?;
-        let reader = ipc::read::FileReader::new(reader, metadata, None);
+        let reader = ipc::read::FileReader::new(reader, metadata, None, None);
 
         Ok(Self(reader))
     }

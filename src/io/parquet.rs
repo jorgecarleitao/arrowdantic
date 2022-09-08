@@ -8,22 +8,33 @@ use super::super::Chunk;
 use super::super::Error;
 
 #[pyclass]
-pub struct ParquetFileReader(parquet::read::FileReader<file_like::FileReader>);
+pub struct ParquetFileReader(parquet::read::FileReader<file_like::FileReader>, Schema);
 
 #[pymethods]
 impl ParquetFileReader {
     #[new]
     fn new(obj: PyObject) -> PyResult<Self> {
-        let reader = file_like::FileReader::from_pyobject(obj)?;
+        let mut reader = file_like::FileReader::from_pyobject(obj)?;
 
-        let reader =
-            parquet::read::FileReader::try_new(reader, None, None, None, None).map_err(Error)?;
+        let metadata = parquet::read::read_metadata(&mut reader).map_err(Error)?;
+        let schema = parquet::read::infer_schema(&metadata).map_err(Error)?;
 
-        Ok(Self(reader))
+        let reader = parquet::read::FileReader::new(
+            reader,
+            metadata.row_groups,
+            schema.clone(),
+            None,
+            None,
+            None,
+        );
+
+        let schema = Schema(schema);
+
+        Ok(Self(reader, schema))
     }
 
     fn schema(slf: PyRef<Self>) -> Schema {
-        Schema(slf.0.schema().clone())
+        slf.1.clone()
     }
 
     fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {

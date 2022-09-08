@@ -2,7 +2,7 @@ use pyo3::{prelude::*, pyclass::CompareOp, types::PyType};
 
 use arrow2::datatypes::{DataType as _DataType, Field as _Field, Schema as _Schema, TimeUnit};
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 #[pyclass]
 pub struct DataType(pub _DataType);
 
@@ -84,7 +84,7 @@ impl DataType {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 #[pyclass]
 pub struct Field(pub _Field);
 
@@ -136,7 +136,7 @@ impl Field {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 #[pyclass]
 pub struct Schema(pub _Schema);
 

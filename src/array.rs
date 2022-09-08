@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use arrow2::{
     array::{
         Array, BinaryArray as _BinaryArray, BooleanArray as _BooleanArray, PrimitiveArray,
@@ -9,6 +7,7 @@ use arrow2::{
 };
 
 use pyo3::prelude::*;
+use pyo3::types::PyIterator;
 use pyo3::{class::basic::CompareOp, types::PyType};
 
 use super::datatypes;
@@ -28,6 +27,11 @@ macro_rules! primitive {
                     Ok(Self(PrimitiveArray::<$type>::from_vec(values)))
                 } else if let Ok(values) = values.extract::<Vec<Option<$type>>>() {
                     Ok(Self(PrimitiveArray::<$type>::from(values)))
+                } else if let Ok(values) = values.extract::<&PyIterator>() {
+                    values
+                        .map(|x| x.and_then(|x| x.extract::<Option<$type>>()))
+                        .collect::<Result<PrimitiveArray<$type>, _>>()
+                        .map(Self)
                 } else {
                     todo!()
                 }
@@ -92,6 +96,11 @@ impl Int64Array {
             Ok(Self(PrimitiveArray::<i64>::from_vec(values)))
         } else if let Ok(values) = values.extract::<Vec<Option<i64>>>() {
             Ok(Self(PrimitiveArray::<i64>::from(values)))
+        } else if let Ok(values) = values.extract::<&PyIterator>() {
+            values
+                .map(|x| x.and_then(|x| x.extract::<Option<i64>>()))
+                .collect::<Result<PrimitiveArray<i64>, _>>()
+                .map(Self)
         } else {
             todo!()
         }
@@ -157,6 +166,11 @@ impl Int32Array {
             Ok(Self(PrimitiveArray::<i32>::from_vec(values)))
         } else if let Ok(values) = values.extract::<Vec<Option<i32>>>() {
             Ok(Self(PrimitiveArray::<i32>::from(values)))
+        } else if let Ok(values) = values.extract::<&PyIterator>() {
+            values
+                .map(|x| x.and_then(|x| x.extract::<Option<i32>>()))
+                .collect::<Result<PrimitiveArray<i32>, _>>()
+                .map(Self)
         } else {
             todo!()
         }
@@ -210,13 +224,18 @@ pub struct BooleanArray(pub _BooleanArray);
 impl BooleanArray {
     #[new]
     fn new(values: &PyAny) -> PyResult<Self> {
-        Ok(if let Ok(values) = values.extract::<Vec<bool>>() {
-            Self(_BooleanArray::from_slice(values))
+        if let Ok(values) = values.extract::<Vec<bool>>() {
+            Ok(Self(_BooleanArray::from_slice(values)))
         } else if let Ok(values) = values.extract::<Vec<Option<bool>>>() {
-            Self(_BooleanArray::from(values))
+            Ok(Self(_BooleanArray::from(values)))
+        } else if let Ok(values) = values.extract::<&PyIterator>() {
+            values
+                .map(|x| x.and_then(|x| x.extract::<Option<bool>>()))
+                .collect::<Result<_BooleanArray, _>>()
+                .map(Self)
         } else {
             todo!()
-        })
+        }
     }
 
     fn __repr__(&self) -> String {
@@ -267,6 +286,11 @@ macro_rules! binary {
                     Ok(Self(_BinaryArray::<$type>::from_slice(values)))
                 } else if let Ok(values) = values.extract::<Vec<Option<&[u8]>>>() {
                     Ok(Self(_BinaryArray::<$type>::from(values)))
+                } else if let Ok(values) = values.extract::<&PyIterator>() {
+                    values
+                        .map(|x| x.and_then(|x| x.extract::<Option<&[u8]>>()))
+                        .collect::<Result<_BinaryArray<$type>, _>>()
+                        .map(Self)
                 } else {
                     todo!()
                 }
@@ -325,6 +349,11 @@ macro_rules! string {
                     Ok(Self(Utf8Array::<$type>::from_slice(values)))
                 } else if let Ok(values) = values.extract::<Vec<Option<&str>>>() {
                     Ok(Self(Utf8Array::<$type>::from(values)))
+                } else if let Ok(values) = values.extract::<&PyIterator>() {
+                    values
+                        .map(|x| x.and_then(|x| x.extract::<Option<&str>>()))
+                        .collect::<Result<Utf8Array<$type>, _>>()
+                        .map(Self)
                 } else {
                     todo!()
                 }
@@ -396,6 +425,7 @@ pub fn to_py_object(py: Python, array: &dyn Array) -> PyObject {
             UInt16 => primitive!(array, py, u16, UInt16Array),
             UInt32 => primitive!(array, py, u32, UInt32Array),
             UInt64 => primitive!(array, py, u64, UInt64Array),
+            Float16 => todo!(),
             Float32 => primitive!(array, py, f32, Float32Array),
             Float64 => primitive!(array, py, f64, Float64Array),
             DaysMs => todo!(),
@@ -421,37 +451,37 @@ pub fn to_py_object(py: Python, array: &dyn Array) -> PyObject {
     }
 }
 
-pub fn from_py_object(py: Python, array: PyObject) -> Arc<dyn Array> {
+pub fn from_py_object(py: Python, array: PyObject) -> Box<dyn Array> {
     if let Ok(array) = array.extract::<BooleanArray>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<Int8Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<Int16Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<Int32Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<Int64Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<UInt8Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<UInt16Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<UInt32Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<UInt64Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<Float32Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<Float64Array>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<StringArray>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<LargeStringArray>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<BinaryArray>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else if let Ok(array) = array.extract::<LargeBinaryArray>(py) {
-        Arc::new(array.0) as Arc<dyn Array>
+        array.0.boxed()
     } else {
         todo!("{:?}", array)
     }
