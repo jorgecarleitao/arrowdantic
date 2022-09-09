@@ -23,7 +23,9 @@ macro_rules! primitive {
         impl $name {
             #[new]
             fn new(values: &PyAny) -> PyResult<Self> {
-                if let Ok(values) = values.extract::<Vec<$type>>() {
+                if let Ok(values) = values.extract::<Self>() {
+                    Ok(values)
+                } else if let Ok(values) = values.extract::<Vec<$type>>() {
                     Ok(Self(PrimitiveArray::<$type>::from_vec(values)))
                 } else if let Ok(values) = values.extract::<Vec<Option<$type>>>() {
                     Ok(Self(PrimitiveArray::<$type>::from(values)))
@@ -92,7 +94,9 @@ pub struct Int64Array(pub PrimitiveArray<i64>);
 impl Int64Array {
     #[new]
     fn new(values: &PyAny) -> PyResult<Self> {
-        if let Ok(values) = values.extract::<Vec<i64>>() {
+        if let Ok(values) = values.extract::<Self>() {
+            Ok(values)
+        } else if let Ok(values) = values.extract::<Vec<i64>>() {
             Ok(Self(PrimitiveArray::<i64>::from_vec(values)))
         } else if let Ok(values) = values.extract::<Vec<Option<i64>>>() {
             Ok(Self(PrimitiveArray::<i64>::from(values)))
@@ -140,11 +144,31 @@ impl Int64Array {
     }
 
     #[classmethod]
+    fn from_ts_s(_: &PyType, values: &PyAny, tz: Option<String>) -> PyResult<Self> {
+        Self::new(values)
+            .map(|v| v.0.to(DataType::Timestamp(TimeUnit::Second, tz)))
+            .map(Self)
+    }
+
+    #[classmethod]
+    fn from_ts_ms(_: &PyType, values: &PyAny, tz: Option<String>) -> PyResult<Self> {
+        Self::new(values)
+            .map(|v| v.0.to(DataType::Timestamp(TimeUnit::Millisecond, tz)))
+            .map(Self)
+    }
+
+    #[classmethod]
     fn from_ts_us(_: &PyType, values: &PyAny, tz: Option<String>) -> PyResult<Self> {
-        let values = Self::new(values)?;
-        Ok(Self(
-            values.0.to(DataType::Timestamp(TimeUnit::Microsecond, tz)),
-        ))
+        Self::new(values)
+            .map(|v| v.0.to(DataType::Timestamp(TimeUnit::Microsecond, tz)))
+            .map(Self)
+    }
+
+    #[classmethod]
+    fn from_ts_ns(_: &PyType, values: &PyAny, tz: Option<String>) -> PyResult<Self> {
+        Self::new(values)
+            .map(|v| v.0.to(DataType::Timestamp(TimeUnit::Nanosecond, tz)))
+            .map(Self)
     }
 
     #[classmethod]
@@ -162,7 +186,9 @@ pub struct Int32Array(pub PrimitiveArray<i32>);
 impl Int32Array {
     #[new]
     fn new(values: &PyAny) -> PyResult<Self> {
-        if let Ok(values) = values.extract::<Vec<i32>>() {
+        if let Ok(values) = values.extract::<Self>() {
+            Ok(values)
+        } else if let Ok(values) = values.extract::<Vec<i32>>() {
             Ok(Self(PrimitiveArray::<i32>::from_vec(values)))
         } else if let Ok(values) = values.extract::<Vec<Option<i32>>>() {
             Ok(Self(PrimitiveArray::<i32>::from(values)))
@@ -224,7 +250,9 @@ pub struct BooleanArray(pub _BooleanArray);
 impl BooleanArray {
     #[new]
     fn new(values: &PyAny) -> PyResult<Self> {
-        if let Ok(values) = values.extract::<Vec<bool>>() {
+        if let Ok(values) = values.extract::<BooleanArray>() {
+            Ok(values)
+        } else if let Ok(values) = values.extract::<Vec<bool>>() {
             Ok(Self(_BooleanArray::from_slice(values)))
         } else if let Ok(values) = values.extract::<Vec<Option<bool>>>() {
             Ok(Self(_BooleanArray::from(values)))
@@ -282,7 +310,9 @@ macro_rules! binary {
         impl $name {
             #[new]
             fn new(values: &PyAny) -> PyResult<Self> {
-                if let Ok(values) = values.extract::<Vec<&[u8]>>() {
+                if let Ok(values) = values.extract::<Self>() {
+                    Ok(values)
+                } else if let Ok(values) = values.extract::<Vec<&[u8]>>() {
                     Ok(Self(_BinaryArray::<$type>::from_slice(values)))
                 } else if let Ok(values) = values.extract::<Vec<Option<&[u8]>>>() {
                     Ok(Self(_BinaryArray::<$type>::from(values)))
@@ -345,7 +375,9 @@ macro_rules! string {
         impl $name {
             #[new]
             fn new(values: &PyAny) -> PyResult<Self> {
-                if let Ok(values) = values.extract::<Vec<&str>>() {
+                if let Ok(values) = values.extract::<Self>() {
+                    Ok(values)
+                } else if let Ok(values) = values.extract::<Vec<&str>>() {
                     Ok(Self(Utf8Array::<$type>::from_slice(values)))
                 } else if let Ok(values) = values.extract::<Vec<Option<&str>>>() {
                     Ok(Self(Utf8Array::<$type>::from(values)))
