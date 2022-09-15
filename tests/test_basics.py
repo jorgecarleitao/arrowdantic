@@ -97,13 +97,37 @@ def test_datetime():
         microsecond=1,
         tzinfo=datetime.timezone.utc,
     )
-    a = ad.TimestampArray([dt, None])
+    a = ad.TimestampArray([dt, None], "us")
     assert (
         str(a)
-        == 'Timestamp(Microsecond, Some("+00:00"))[2021-01-01 01:01:01.000001 +00:00, None]'
+        == 'Timestamp(Microsecond, Some("UTC"))[2021-01-01 01:01:01.000001 +00:00, None]'
     )
     assert list(a) == [dt, None]
-    assert a.type == ad.DataType.timestamp(datetime.timezone.utc)
+    assert a.type == ad.DataType.timestamp("us", datetime.timezone.utc)
+    assert a.tzinfo == 'UTC'
+
+    # test from_timestamps
+    assert (
+        ad.TimestampArray.from_timestamps(
+            [int(dt.timestamp() * 10**6), None], "us", datetime.timezone.utc
+        )
+        == a
+    )
+
+    # test from_timestamps with other times
+    a = ad.TimestampArray.from_timestamps(
+        [int(dt.timestamp()), None], "s", datetime.timezone.utc
+    )
+    dt = datetime.datetime(
+        year=2021,
+        month=1,
+        day=1,
+        hour=1,
+        minute=1,
+        second=1,
+        tzinfo=datetime.timezone.utc,
+    )
+    assert list(a) == [dt, None]
 
 
 def test_date():
@@ -122,6 +146,12 @@ def test_time():
     assert a.type == ad.DataType.time()
 
 
+def test_chunk():
+    a = ad.UInt32Array([1, 2])
+    chunk = ad.Chunk([a])
+    assert isinstance(chunk.arrays()[0], ad.UInt32Array)
+
+
 def test_ipc_read():
     arrays = [
         pa.array([True, None, False], type=pa.bool_()),
@@ -134,6 +164,7 @@ def test_ipc_read():
         pa.array([b"a", None, b"c"], type=pa.large_binary()),
         pa.array([1.2, None, 3.4], type=pa.float32()),
         pa.array([1.2, None, 3.4], type=pa.float64()),
+        pa.array([1, None, 3], type=pa.timestamp("us")),
     ]
 
     schema = pa.schema(
@@ -162,6 +193,24 @@ def test_ipc_read():
     assert arrays[7] == ad.LargeBinaryArray([b"a", None, b"c"])
     assert arrays[8] == ad.Float32Array([1.2, None, 3.4])
     assert arrays[9] == ad.Float64Array([1.2, None, 3.4])
+    assert arrays[10] == ad.TimestampArray(
+        [
+            datetime.datetime(
+                year=1970,
+                month=1,
+                day=1,
+                microsecond=1,
+            ),
+            None,
+            datetime.datetime(
+                year=1970,
+                month=1,
+                day=1,
+                microsecond=3,
+            ),
+        ],
+        "us",
+    )
 
 
 def test_parquet_read():
@@ -176,6 +225,7 @@ def test_parquet_read():
         pa.array([b"a", None, b"c"], type=pa.large_binary()),
         pa.array([1.2, None, 3.4], type=pa.float32()),
         pa.array([1.2, None, 3.4], type=pa.float64()),
+        pa.array([1, None, 3], type=pa.timestamp("us")),
     ]
 
     schema = pa.schema(
@@ -202,6 +252,24 @@ def test_parquet_read():
     assert arrays[7] == ad.LargeBinaryArray([b"a", None, b"c"])
     assert arrays[8] == ad.Float32Array([1.2, None, 3.4])
     assert arrays[9] == ad.Float64Array([1.2, None, 3.4])
+    assert arrays[10] == ad.TimestampArray(
+        [
+            datetime.datetime(
+                year=1970,
+                month=1,
+                day=1,
+                microsecond=1,
+            ),
+            None,
+            datetime.datetime(
+                year=1970,
+                month=1,
+                day=1,
+                microsecond=3,
+            ),
+        ],
+        "us",
+    )
 
 
 def test_ipc_round_trip():

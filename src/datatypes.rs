@@ -9,8 +9,33 @@ pub struct DataType(pub _DataType);
 #[pymethods]
 impl DataType {
     #[classmethod]
+    fn uint8(_: &PyType) -> Self {
+        Self(_DataType::UInt8)
+    }
+
+    #[classmethod]
+    fn uint16(_: &PyType) -> Self {
+        Self(_DataType::UInt16)
+    }
+
+    #[classmethod]
     fn uint32(_: &PyType) -> Self {
         Self(_DataType::UInt32)
+    }
+
+    #[classmethod]
+    fn uint64(_: &PyType) -> Self {
+        Self(_DataType::UInt64)
+    }
+
+    #[classmethod]
+    fn int8(_: &PyType) -> Self {
+        Self(_DataType::Int8)
+    }
+
+    #[classmethod]
+    fn int16(_: &PyType) -> Self {
+        Self(_DataType::Int16)
     }
 
     #[classmethod]
@@ -21,6 +46,16 @@ impl DataType {
     #[classmethod]
     fn int64(_: &PyType) -> Self {
         Self(_DataType::Int64)
+    }
+
+    #[classmethod]
+    fn float32(_: &PyType) -> Self {
+        Self(_DataType::Float32)
+    }
+
+    #[classmethod]
+    fn float64(_: &PyType) -> Self {
+        Self(_DataType::Float64)
     }
 
     #[classmethod]
@@ -49,8 +84,23 @@ impl DataType {
     }
 
     #[classmethod]
-    fn timestamp(_: &PyType, tz: Option<String>) -> Self {
+    fn ts_s(_: &PyType, tz: Option<String>) -> Self {
+        Self(_DataType::Timestamp(TimeUnit::Second, tz))
+    }
+
+    #[classmethod]
+    fn ts_ms(_: &PyType, tz: Option<String>) -> Self {
+        Self(_DataType::Timestamp(TimeUnit::Millisecond, tz))
+    }
+
+    #[classmethod]
+    fn ts_us(_: &PyType, tz: Option<String>) -> Self {
         Self(_DataType::Timestamp(TimeUnit::Microsecond, tz))
+    }
+
+    #[classmethod]
+    fn ts_ns(_: &PyType, tz: Option<String>) -> Self {
+        Self(_DataType::Timestamp(TimeUnit::Nanosecond, tz))
     }
 
     #[classmethod]
@@ -81,6 +131,31 @@ impl DataType {
         } else {
             false
         })
+    }
+
+    pub fn is_ts(&self) -> bool {
+        matches!(&self.0, _DataType::Timestamp(_, _))
+    }
+
+    pub fn tz(&self) -> Option<String> {
+        if let _DataType::Timestamp(_, tz) = &self.0 {
+            tz.clone()
+        } else {
+            None
+        }
+    }
+
+    pub fn timeunit(&self) -> Option<String> {
+        if let _DataType::Timestamp(v, _) = &self.0 {
+            match v {
+                TimeUnit::Second => "s".to_string().into(),
+                TimeUnit::Millisecond => "ms".to_string().into(),
+                TimeUnit::Microsecond => "us".to_string().into(),
+                TimeUnit::Nanosecond => "ns".to_string().into(),
+            }
+        } else {
+            None
+        }
     }
 }
 

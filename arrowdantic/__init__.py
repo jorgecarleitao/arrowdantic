@@ -1,11 +1,26 @@
 """
-A Python library written in Rust to read from and write to Apache Arrow IPC (also known as feather)
-and Apache Parquet.
+A library to read from and write to
+
+* Apache Arrow IPC
+* Apache Parquet
+* ODBC (databases)
 """
-from typing import Iterable, List, Optional
+import zoneinfo
+import enum
+import typing
 import datetime
+import abc
 
 import arrowdantic.arrowdantic as _arrowdantic_internal
+
+
+class TimeUnit(str, enum.Enum):
+    """unit of representarion of a time"""
+
+    s = "s"
+    ms = "ms"
+    us = "us"
+    ns = "ns"
 
 
 class DataType:
@@ -19,6 +34,7 @@ class DataType:
 
     @classmethod
     def bool(cls) -> "DataType":
+        """Returns ``DataType`` representing boolean"""
         return cls._from_type(_arrowdantic_internal.DataType.bool())
 
     @classmethod
@@ -63,25 +79,38 @@ class DataType:
 
     @classmethod
     def string(cls) -> "DataType":
+        """Returns ``DataType`` representing a string (utf8)"""
         return cls._from_type(_arrowdantic_internal.DataType.string())
 
     @classmethod
     def large_string(cls) -> "DataType":
+        """Returns ``DataType`` representing a string (utf8)"""
         return cls._from_type(_arrowdantic_internal.DataType.large_string())
 
     @classmethod
     def binary(cls) -> "DataType":
+        """Returns ``DataType`` representing binary (bytes)"""
         return cls._from_type(_arrowdantic_internal.DataType.binary())
 
     @classmethod
     def large_binary(cls) -> "DataType":
+        """Returns ``DataType`` representing binary (bytes)"""
         return cls._from_type(_arrowdantic_internal.DataType.large_binary())
 
     @classmethod
-    def timestamp(cls, tz: Optional[datetime.tzinfo] = None) -> "DataType":
+    def timestamp(
+        cls, unit: TimeUnit, tz: typing.Optional[datetime.tzinfo]
+    ) -> "DataType":
         if tz:
-            tz = _format_offset(tz.utcoffset(None))
-        return cls._from_type(_arrowdantic_internal.DataType.timestamp(tz))
+            tz = tz.tzname(None)
+        if unit == TimeUnit.s:
+            return cls._from_type(_arrowdantic_internal.DataType.ts_s(tz))
+        if unit == TimeUnit.ms:
+            return cls._from_type(_arrowdantic_internal.DataType.ts_ms(tz))
+        if unit == TimeUnit.us:
+            return cls._from_type(_arrowdantic_internal.DataType.ts_us(tz))
+        if unit == TimeUnit.ns:
+            return cls._from_type(_arrowdantic_internal.DataType.ts_ns(tz))
 
     @classmethod
     def date(cls) -> "DataType":
@@ -150,7 +179,7 @@ class Schema:
 
     __slots__ = ("_schema",)
 
-    def __init__(self, fields: List[Field]):
+    def __init__(self, fields: typing.List[Field]):
         self._schema = _arrowdantic_internal.Schema([f._field for f in fields])
 
     @property
@@ -159,17 +188,52 @@ class Schema:
         return [Field._from_field(f) for f in self._schema.fields]
 
 
-class Array:
-    """An ``Array`` is an immutable, fixed length, Arrow-aligned sequence of optional elements.
+class Array(abc.ABC):
+    """An immutable, fixed length, Arrow-aligned sequence of typing.Optional elements.
     Different implementations represent different logical types (e.g. integers, booleans, strings)"""
 
     __slots__ = ("_array",)
 
     @classmethod
     def _from_array(cls, array):
-        a = cls()
-        a._array = array
-        return a
+        # dynamic dispatch of the array based to the corresponding types
+        if array.type == _arrowdantic_internal.DataType.time():
+            return TimeArray(array)
+        if array.type == _arrowdantic_internal.DataType.date():
+            return DateArray._from_array(array)
+        if array.type.is_ts():
+            return TimestampArray._from_array(array)
+        if array.type == _arrowdantic_internal.DataType.bool():
+            return BooleanArray(array)
+        if array.type == _arrowdantic_internal.DataType.uint8():
+            return UInt8Array(array)
+        if array.type == _arrowdantic_internal.DataType.uint16():
+            return UInt16Array(array)
+        if array.type == _arrowdantic_internal.DataType.uint32():
+            return UInt32Array(array)
+        if array.type == _arrowdantic_internal.DataType.uint64():
+            return UInt64Array(array)
+        if array.type == _arrowdantic_internal.DataType.int8():
+            return Int8Array(array)
+        if array.type == _arrowdantic_internal.DataType.int16():
+            return Int16Array(array)
+        if array.type == _arrowdantic_internal.DataType.int32():
+            return Int32Array(array)
+        if array.type == _arrowdantic_internal.DataType.int64():
+            return Int64Array(array)
+        if array.type == _arrowdantic_internal.DataType.binary():
+            return BinaryArray(array)
+        if array.type == _arrowdantic_internal.DataType.large_binary():
+            return LargeBinaryArray(array)
+        if array.type == _arrowdantic_internal.DataType.string():
+            return StringArray(array)
+        if array.type == _arrowdantic_internal.DataType.large_string():
+            return LargeStringArray(array)
+        if array.type == _arrowdantic_internal.DataType.float32():
+            return Float32Array(array)
+        if array.type == _arrowdantic_internal.DataType.float64():
+            return Float64Array(array)
+        raise NotImplementedError(array.type)
 
     @property
     def type(self) -> DataType:
@@ -192,83 +256,170 @@ class Array:
 class Int8Array(Array):
     """An array of 8-bit signed integers"""
 
-    def __init__(self, values: List[Optional[int]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[int]]):
         self._array = _arrowdantic_internal.Int8Array(values)
 
 
 class Int16Array(Array):
     """An array of 16-bit signed integers"""
 
-    def __init__(self, values: List[Optional[int]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[int]]):
         self._array = _arrowdantic_internal.Int16Array(values)
 
 
 class Int32Array(Array):
     """An array of 32-bit signed integers"""
 
-    def __init__(self, values: List[Optional[int]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[int]]):
         self._array = _arrowdantic_internal.Int32Array(values)
 
 
 class Int64Array(Array):
     """An array of 64-bit signed integers"""
 
-    def __init__(self, values: List[Optional[int]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[int]]):
         self._array = _arrowdantic_internal.Int64Array(values)
 
 
 class TimestampArray(Int64Array):
-    """An array of 64-bit signed integers each representing a datetime with the same timezone"""
+    """
+    An array where each element represents a ``datetime`` with the same (typing.Optional) timezone
 
-    __slots__ = ("_tz",)
+    Arrow timestamps are fundamentally incompatible with Python ``datetime``:
 
-    def __init__(self, values: List[Optional[datetime.datetime]]):
-        def _transform(value: Optional[datetime.datetime]):
+    * Arrow timestamps are represented as integers.
+    * While Python ``datetime`` stores its timezone on a per-element, Arrow timestamps have
+      a common timezone.
+    """
+
+    @classmethod
+    def _from_array(cls, array):
+        self = TimestampArray([], array.type.timeunit(), array.type.tz())
+        self._array = array
+        return self
+
+    @property
+    def tzinfo(self) -> typing.Optional[str]:
+        """Returns the tzinfo of this array"""
+        return self._array.type.tz()
+
+    @property
+    def timeunit(self) -> TimeUnit:
+        """Returns the ``TimeUnit`` of this array"""
+        return self._array.type.timeunit()
+
+    def __init__(
+        self, values: typing.List[typing.Optional[datetime.datetime]], unit: TimeUnit,
+        tz: typing.Optional[datetime.tzinfo] = None,
+    ):
+        """Initializes a"""
+        if not values:
+            tz = None
+            str_tz = None
+        else:
+            tz = values[0].tzinfo
+            if tz is not None:
+                str_tz = tz.tzname(values[0])
+            else:
+                str_tz = None
+
+        if unit == TimeUnit.s:
+            factor = 1
+        if unit == TimeUnit.ms:
+            factor = 10**3
+        if unit == TimeUnit.us:
+            factor = 10**6
+        if unit == TimeUnit.ns:
+            factor = 10**9
+
+        def _transform(value: typing.Optional[datetime.datetime]):
             if value is None:
                 return None
             else:
+                if value.tzinfo != tz:
+                    raise ValueError("Values must all have the same tzinfo")
                 seconds = value.timestamp()
-                microseconds = int(seconds * 10**6)
+                microseconds = int(seconds * factor)
                 return microseconds
 
-        if not values:
-            tz = None
-            self._tz = None
-        else:
-            tz = values[0].timetz()
-            self._tz = tz.tzinfo
-            tz = _format_offset(tz.utcoffset())
-
         values = list(map(_transform, values))
-        self._array = _arrowdantic_internal.Int64Array.from_ts_us(values, tz)
 
-    def __iter__(self):
-        return TimestampIterator(self._array.__iter__(), self._tz)
+        if unit == TimeUnit.s:
+            self._array = _arrowdantic_internal.Int64Array.from_ts_s(values, str_tz)
+        if unit == TimeUnit.ms:
+            self._array = _arrowdantic_internal.Int64Array.from_ts_ms(values, str_tz)
+        if unit == TimeUnit.us:
+            self._array = _arrowdantic_internal.Int64Array.from_ts_us(values, str_tz)
+        if unit == TimeUnit.ns:
+            self._array = _arrowdantic_internal.Int64Array.from_ts_ns(values, str_tz)
+
+    @classmethod
+    def from_timestamps(
+        cls,
+        values: typing.Iterable[typing.Optional[int]],
+        unit: TimeUnit,
+        tz: typing.Optional[datetime.tzinfo],
+    ) -> "TimestampArray":
+        self = cls([], unit, tz)
+
+        if tz is not None:
+            str_tz = tz.tzname(None)
+        else:
+            str_tz = None
+        if unit == TimeUnit.s:
+            self._array = _arrowdantic_internal.Int64Array.from_ts_s(values, str_tz)
+        elif unit == TimeUnit.ms:
+            self._array = _arrowdantic_internal.Int64Array.from_ts_ms(values, str_tz)
+        elif unit == TimeUnit.us:
+            self._array = _arrowdantic_internal.Int64Array.from_ts_us(values, str_tz)
+        elif unit == TimeUnit.ns:
+            self._array = _arrowdantic_internal.Int64Array.from_ts_ns(values, str_tz)
+        return self
+
+    def __iter__(self) -> typing.Iterator[typing.Optional[datetime.datetime]]:
+        return _TimestampIterator(self._array.__iter__(), self.timeunit, self.tzinfo)
 
 
-class TimestampIterator:
-    __slots__ = ("_iter", "_tz")
+class _TimestampIterator:
+    """An iterator of timestamps"""
 
-    def __init__(self, iter, tz):
+    __slots__ = ("_iter", "_tz", "_factor")
+
+    def __init__(self, iter, unit: TimeUnit, tz: datetime.tzinfo):
         self._iter = iter
-        self._tz = tz
+        self._tz = zoneinfo.ZoneInfo(tz)
+        if unit == TimeUnit.s:
+            factor = 1
+        if unit == TimeUnit.ms:
+            factor = 1 / 10**3
+        if unit == TimeUnit.us:
+            factor = 1 / 10**6
+        if unit == TimeUnit.ns:
+            factor = 1 / 10**9
+        self._factor = factor
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> typing.Optional[datetime.datetime]:
         dt_i64 = next(self._iter)
-        if dt_i64:
-            return datetime.datetime.fromtimestamp(dt_i64 / 10**6, self._tz)
+        if dt_i64 is not None:
+            return datetime.datetime.fromtimestamp(dt_i64 * self._factor, self._tz)
 
 
 _DATE_EPOCH = datetime.datetime.utcfromtimestamp(0).date()
 
+
 class DateArray(Int32Array):
     """An array of 32-bit signed integers each representing the day since epoch"""
 
-    def __init__(self, values: List[Optional[datetime.date]]):
-        def _transform(value: Optional[datetime.date]):
+    @classmethod
+    def _from_array(cls, array):
+        self = DateArray([])
+        self._array = array
+
+    def __init__(self, values: typing.List[typing.Optional[datetime.date]]):
+        def _transform(value: typing.Optional[datetime.date]):
             if value is None:
                 return None
             else:
@@ -278,11 +429,11 @@ class DateArray(Int32Array):
         self._array = _arrowdantic_internal.Int32Array.from_date(values)
 
     def __iter__(self):
-        return DateIterator(self._array.__iter__())
+        return _DateIterator(self._array.__iter__())
 
 
-class DateIterator:
-    __slots__ = ("_iter")
+class _DateIterator:
+    __slots__ = "_iter"
 
     def __init__(self, iter):
         self._iter = iter
@@ -292,30 +443,33 @@ class DateIterator:
 
     def __next__(self):
         dt_i32 = next(self._iter)
-        if dt_i32:
+        if dt_i32 is not None:
             return _DATE_EPOCH + datetime.timedelta(days=dt_i32)
-
 
 
 class TimeArray(Int64Array):
     """An array of 64-bit signed integers each representing the naive time since midnight with microsecond precision"""
 
-    def __init__(self, values: List[Optional[datetime.time]]):
-        def _transform(value: Optional[datetime.time]):
+    def __init__(self, values: typing.List[typing.Optional[datetime.time]]):
+        def _transform(value: typing.Optional[datetime.time]):
             if value is None:
                 return None
             else:
-                return ((value.hour * 60 + value.minute) * 60 + value.second) * 10**6 + value.microsecond
+                return (
+                    (value.hour * 60 + value.minute) * 60 + value.second
+                ) * 10**6 + value.microsecond
 
         values = list(map(_transform, values))
         self._array = _arrowdantic_internal.Int64Array.from_time_us(values)
 
     def __iter__(self):
-        return TimeIterator(self._array.__iter__())
+        return _TimeIterator(self._array.__iter__())
 
 
-class TimeIterator:
-    __slots__ = ("_iter")
+class _TimeIterator:
+    """An iterator of timestamps"""
+
+    __slots__ = "_iter"
 
     def __init__(self, iter):
         self._iter = iter
@@ -325,94 +479,93 @@ class TimeIterator:
 
     def __next__(self):
         time_us = next(self._iter)
-        if time_us:
+        if time_us is not None:
             return datetime.datetime.fromtimestamp(time_us / 10**6).time()
-
 
 
 class Float32Array(Array):
     """An array of 32-bit floating point"""
 
-    def __init__(self, values: List[Optional[float]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[float]]):
         self._array = _arrowdantic_internal.Float32Array(values)
 
 
 class Float64Array(Array):
     """An array of 64-bit floating point"""
 
-    def __init__(self, values: List[Optional[float]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[float]]):
         self._array = _arrowdantic_internal.Float64Array(values)
 
 
 class UInt8Array(Array):
     """An array of 8-bit unsigned integers (also known as bytes)"""
 
-    def __init__(self, values: List[Optional[int]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[int]]):
         self._array = _arrowdantic_internal.UInt8Array(values)
 
 
 class UInt16Array(Array):
     """An array of 16-bit unsigned integers"""
 
-    def __init__(self, values: List[Optional[int]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[int]]):
         self._array = _arrowdantic_internal.UInt16Array(values)
 
 
 class UInt32Array(Array):
     """An array of 32-bit unsigned integers"""
 
-    def __init__(self, values: List[Optional[int]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[int]]):
         self._array = _arrowdantic_internal.UInt32Array(values)
 
 
 class UInt64Array(Array):
     """An array of 64-bit unsigned integers"""
 
-    def __init__(self, values: List[Optional[int]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[int]]):
         self._array = _arrowdantic_internal.UInt64Array(values)
 
 
 class BooleanArray(Array):
     """An array of booleans"""
 
-    def __init__(self, values: List[Optional[bool]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[bool]]):
         self._array = _arrowdantic_internal.BooleanArray(values)
 
 
 class StringArray(Array):
     """An array of strings"""
 
-    def __init__(self, values: List[Optional[str]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[str]]):
         self._array = _arrowdantic_internal.StringArray(values)
 
 
 class LargeStringArray(Array):
     """An array of strings. It differs from ``StringArray`` in that it can contain
-    2x more items (and uses 2x more memory)"""
+    ~2^32 more items (and uses 2x more memory per item)"""
 
-    def __init__(self, values: List[Optional[str]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[str]]):
         self._array = _arrowdantic_internal.LargeStringArray(values)
 
 
 class BinaryArray(Array):
     """An array of (multiple) bytes per element."""
 
-    def __init__(self, values: List[Optional[bytes]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[bytes]]):
         self._array = _arrowdantic_internal.BinaryArray(values)
 
 
 class LargeBinaryArray(Array):
     """An array of (multiple) bytes per element. It differs from ``BinaryArray`` in
-    that it can contain 2x more items (and uses 2x more memory)"""
+    that it can contain ~2^32 more items (and uses 2x more memory per item)"""
 
-    def __init__(self, values: List[Optional[bytes]]):
+    def __init__(self, values: typing.Iterable[typing.Optional[bytes]]):
         self._array = _arrowdantic_internal.LargeBinaryArray(values)
 
 
 class Chunk:
     """A list of ``Array``s all with the same length"""
 
-    def __init__(self, arrays: List[Array]):
+    def __init__(self, arrays: typing.List[Array]):
         self._chunk = _arrowdantic_internal.Chunk([x._array for x in arrays])
 
     @staticmethod
@@ -421,7 +574,7 @@ class Chunk:
         a._chunk = chunk
         return a
 
-    def arrays(self) -> List[Array]:
+    def arrays(self) -> typing.List[Array]:
         """Returns the arrays - they are guaranteed to have the same length"""
         return [Array._from_array(array) for array in self._chunk.arrays()]
 
@@ -436,6 +589,8 @@ class ArrowFileReader:
     """
     An iterator of ``Chunk``, each corresponding to a record batch from an Arrow IPC file.
     Use this class to read Arrow IPC files.
+
+    The chunks are guaranteed to have the same schema.
     """
 
     def __init__(self, path_or_obj):
@@ -489,6 +644,9 @@ class ArrowFileWriter:
 class ParquetFileReader:
     """
     An iterator of ``Chunk`` from row groups of a Parquet file.
+    Use this class to read Parquet files.
+
+    The chunks are guaranteed to have the same schema (provided by ``schema``).
     """
 
     def __init__(self, path_or_obj):
@@ -548,15 +706,15 @@ class ODBCConnector:
 
     def __init__(self, connection_string: str):
         self._connection_string = connection_string
-        self._connection: Optional[_arrowdantic_internal.ODBCConnector] = None
+        self._connection: typing.Optional[_arrowdantic_internal.ODBCConnector] = None
 
     def __enter__(self) -> "ODBCConnector":
         self._connection = _arrowdantic_internal.ODBCConnector(self._connection_string)
         return self
 
     def execute(
-        self, statement: str, batch_size: Optional[int] = None
-    ) -> Optional[Iterable[Chunk]]:
+        self, statement: str, batch_size: typing.Optional[int] = None
+    ) -> typing.Optional[typing.Iterable[Chunk]]:
         """
         Executes an SQL statement. When the statement is expected to return values, `batch_size` must
         be provided.
@@ -587,7 +745,7 @@ class ODBCChunkIter:
         a._iter = iter
         return a
 
-    def fields(self) -> List[Field]:
+    def fields(self) -> typing.List[Field]:
         return [Field._from_field(f) for f in self._iter.fields()]
 
     def __enter__(self) -> "ODBCChunkIter":
@@ -598,23 +756,3 @@ class ODBCChunkIter:
 
     def __next__(self) -> Chunk:
         return Chunk._from_chunk(next(self._iter))
-
-
-def _format_offset(off):
-    # copied from std - it is private there :/
-    s = ""
-    if off is not None:
-        if off.days < 0:
-            sign = "-"
-            off = -off
-        else:
-            sign = "+"
-        hh, mm = divmod(off, datetime.timedelta(hours=1))
-        mm, ss = divmod(mm, datetime.timedelta(minutes=1))
-        s += "%s%02d:%02d" % (sign, hh, mm)
-        if ss or ss.microseconds:
-            s += ":%02d" % ss.seconds
-
-            if ss.microseconds:
-                s += ".%06d" % ss.microseconds
-    return s
