@@ -29,7 +29,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install maturin
       - name: Build Python package
-        run: maturin build --release --no-sdist --strip --interpreter python${{matrix.python_version}}
+        run: maturin build --release --strip --interpreter python${{matrix.python_version}}
 
       - name: List wheels
         if: matrix.os == 'windows-latest'

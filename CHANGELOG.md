@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.2.2](https://github.com/jorgecarleitao/arrowdantic/tree/v0.2.2) (2022-09-15)
+
+[Full Changelog](https://github.com/jorgecarleitao/arrowdantic/compare/v0.2.1...v0.2.2)
+
+**New features:**
+
+- Added support to create arrays from iterators [\#7](https://github.com/jorgecarleitao/arrowdantic/pull/7) ([jorgecarleitao](https://github.com/jorgecarleitao))
+
+**Enhancements:**
+
+- Improved handling of timezones [\#8](https://github.com/jorgecarleitao/arrowdantic/pull/8) ([jorgecarleitao](https://github.com/jorgecarleitao))
+- Bumped to latest arrow2 [\#6](https://github.com/jorgecarleitao/arrowdantic/pull/6) ([jorgecarleitao](https://github.com/jorgecarleitao))
+
 ## [v0.2.1](https://github.com/jorgecarleitao/arrowdantic/tree/v0.2.1) (2022-06-03)
 
 [Full Changelog](https://github.com/jorgecarleitao/arrowdantic/compare/v0.2.0...v0.2.1)
