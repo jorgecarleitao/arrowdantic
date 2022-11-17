@@ -32,6 +32,27 @@ def test_uint32():
     assert list(a) == [1, None]
 
 
+def test_float32():
+    a = ad.Float32Array([1.2, 2.2])
+    assert str(a) == "UInt32[1.2, 2.2]"
+    assert a.type == ad.DataType.float32()
+
+    a = ad.Float32Array([1.2, None])
+    assert str(a) == "Float32[1.2, None]"
+    assert len(a) == 2
+    assert list(a) == [1.2, None]
+
+
+def test_float64():
+    a = ad.Float64Array([1.2, 2.2])
+    assert str(a) == "UInt32[1.2, 2.2]"
+    assert a.type == ad.DataType.float64()
+
+    a = ad.Float32Array([1.2, None])
+    assert str(a) == "Float64[1.2, None]"
+    assert len(a) == 2
+    assert list(a) == [1.2, None]
+
 def test_boolean():
     a = ad.BooleanArray([True, False])
     assert str(a) == "BooleanArray[true, false]"
