@@ -37,10 +37,10 @@ def test_float32():
     assert str(a) == "Float32[1.2, 2.2]"
     assert a.type == ad.DataType.float32()
 
-    a = ad.Float32Array([1.2, None])
+    a = ad.Float32Array([1.2000000476837158, None])
     assert str(a) == "Float32[1.2, None]"
     assert len(a) == 2
-    assert list(a) == [1.2, None]
+    assert list(a) == [1.2000000476837158, None]
 
 
 def test_float64():
@@ -51,7 +51,7 @@ def test_float64():
     a = ad.Float64Array([1.20000001, None])
     assert str(a) == "Float64[1.20000001, None]"
     assert len(a) == 2
-    assert list(a) == [1.2, None]
+    assert list(a) == [1.20000001, None]
 
 def test_boolean():
     a = ad.BooleanArray([True, False])
