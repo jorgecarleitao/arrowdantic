@@ -44,12 +44,12 @@ def test_float32():
 
 
 def test_float64():
-    a = ad.Float64Array([1.2, 2.2])
-    assert str(a) == "UInt32[1.2, 2.2]"
+    a = ad.Float64Array([1.20000001, 2.2])
+    assert str(a) == "UInt32[1.20000001, 2.2]"
     assert a.type == ad.DataType.float64()
 
-    a = ad.Float32Array([1.2, None])
-    assert str(a) == "Float64[1.2, None]"
+    a = ad.Float32Array([1.20000001, None])
+    assert str(a) == "Float64[1.20000001, None]"
     assert len(a) == 2
     assert list(a) == [1.2, None]
 
