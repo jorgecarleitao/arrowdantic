@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build wheels
-        run: docker run --rm --entrypoint bash -v $(pwd):/io konstin2/maturin:v0.12.10 ./packaging/build_many.sh
+        run: docker run --rm --entrypoint bash -v $(pwd):/io ghcr.io/pyo3/maturin ./packaging/build_many.sh
       - name: Archive wheels
         uses: actions/upload-artifact@v2
         with:
