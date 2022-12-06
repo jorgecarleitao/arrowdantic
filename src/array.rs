@@ -453,6 +453,7 @@ pub fn to_py_object(py: Python, array: &dyn Array) -> PyObject {
             Int32 => primitive!(array, py, i32, Int32Array),
             Int64 => primitive!(array, py, i64, Int64Array),
             Int128 => todo!(),
+            Int256 => todo!(),
             UInt8 => primitive!(array, py, u8, UInt8Array),
             UInt16 => primitive!(array, py, u16, UInt16Array),
             UInt32 => primitive!(array, py, u32, UInt32Array),

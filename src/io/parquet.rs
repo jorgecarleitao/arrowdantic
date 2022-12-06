@@ -63,6 +63,7 @@ impl ParquetFileWriter {
                 version: parquet::write::Version::V2,
                 write_statistics: true,
                 compression: parquet::write::CompressionOptions::Uncompressed,
+                data_pagesize_limit: None,
             },
         )
         .map_err(Error)?;

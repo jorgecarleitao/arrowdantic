@@ -78,6 +78,16 @@ class DataType:
         return cls._from_type(_arrowdantic_internal.DataType.uint64())
 
     @classmethod
+    def float32(cls) -> "DataType":
+        """Returns ``DataType`` representing a 32-bit float"""
+        return cls._from_type(_arrowdantic_internal.DataType.float32())
+    
+    @classmethod
+    def float64(cls) -> "DataType":
+        """Returns ``DataType`` representing a 64-bit float"""
+        return cls._from_type(_arrowdantic_internal.DataType.float64())
+
+    @classmethod
     def string(cls) -> "DataType":
         """Returns ``DataType`` representing a string (utf8)"""
         return cls._from_type(_arrowdantic_internal.DataType.string())
